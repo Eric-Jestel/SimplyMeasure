@@ -32,19 +32,11 @@ class InstrumentControllerOpus:
         self, filepath=r"C:\Users\Public\Documents\Bruker\Opus_8.8.4\Data\RefBlank.0"
     ):
         # uses the filepath to load the blank.
-        self.opus.open(filepath)
-    
-    # 
-    def setBlank(self, filepath):
-
-        path = Path(filepath)
-
-        if not path.exists():
-            print(r"ERROR: File not found.")
-            # More error handelling here, later
         
-        self.blankPath = filepath
-
+        # I'm not sure this will work since writing .open 
+        # in this way will just cause python to look for an 
+        # open function inside opus
+        self.opus.open(filepath) 
 
 
 
