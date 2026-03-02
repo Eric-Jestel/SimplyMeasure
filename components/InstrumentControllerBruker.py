@@ -33,15 +33,13 @@ class InstrumentControllerOpus:
         self, filepath=r"C:\Users\Public\Documents\Bruker\Opus_8.8.4\Data\RefBlank.0"
     ):
         # uses the filepath to load the blank.
-        
-        # I'm not sure this will work since writing .open 
-        # in this way will just cause python to look for an 
+
+        # I'm not sure this will work since writing .open
+        # in this way will just cause python to look for an
         # open function inside opus
-        self.opus.open(filepath) 
+        self.opus.open(filepath)
 
-
-
-    def getSample(self, save_path = None):
+    def getSample(self, save_path=None):
 
         print("Taking Sample...")
         sample_path = self.opus.measure_sample(unload=True)
@@ -52,7 +50,7 @@ class InstrumentControllerOpus:
             save_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.move(sample_path, str(save_path))
             print("Moved sample to:", str(save_path))
-        
+
         return sample_path
 
     def disconnect(self):
