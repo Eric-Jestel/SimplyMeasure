@@ -419,10 +419,6 @@ class InstrumentController:
 
 # print("Launched. Wait 10 seconds")
 # time.sleep(10)
-
-testing = InstrumentController()
-
-print(testing.setup())
 # print(testing.take_blank("test_blank.txt"))
 
 # ok = self._is_success(reply)

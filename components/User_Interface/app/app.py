@@ -1,13 +1,14 @@
-# Tk root + frame router
-import tkinter as tk
-from tkinter import ttk
+# QApplication root + page router
 import sys
 from pathlib import Path
 
+from PyQt6.QtWidgets import QApplication, QMainWindow, QStackedWidget
+from PyQt6.QtCore import QSize
+
 from app.config import APP_TITLE, WINDOW_MIN_SIZE
 from app.state import UIState
-from app.views.setup_page import SetupPageView
-from app.views.instrument_page import InstrumentPageView
+from app.views.setup_page import SetupPage
+from app.views.instrument_page import InstrumentPage
 
 try:
     from components.SystemController import SystemController
@@ -20,28 +21,7 @@ except ImportError:
 
 class PrototypeApp:
     def __init__(self):
-        self.root = tk.Tk()
-        self.root.title(APP_TITLE)
-        self.root.minsize(*WINDOW_MIN_SIZE)
-
-        style = ttk.Style(self.root)
-        try:
-            style.theme_use("clam")
-        except tk.TclError:
-            pass
-
-        # Page background
-        style.configure("Proto.TFrame", background="#EDEBE6")
-
-        # Section background
-        style.configure(
-            "Panel.TFrame", background="#DEDBD5", relief="solid", borderwidth=1
-        )
-
-        # White inset
-        style.configure(
-            "Inset.TFrame", background="white", relief="solid", borderwidth=1
-        )
+        self.qt_app = QApplication.instance() or QApplication(sys.argv)
 
         self.state = UIState()
         self.controller = SystemController(debug=self.state.debug_mode)
@@ -50,26 +30,38 @@ class PrototypeApp:
         self.state.instrument_connected = startup_code != 100
         self.state.server_status = "OK" if startup_code != 110 else "Disconnected"
 
-        container = ttk.Frame(self.root, padding=12)
-        container.grid(row=0, column=0, sticky="nsew")
-        self.root.rowconfigure(0, weight=1)
-        self.root.columnconfigure(0, weight=1)
-        container.rowconfigure(0, weight=1)
-        container.columnconfigure(0, weight=1)
+        # Main window
+        self.window = QMainWindow()
+        self.window.setWindowTitle(APP_TITLE)
+        self.window.setMinimumSize(QSize(*WINDOW_MIN_SIZE))
 
-        self.frames = {}
-        for FrameCls, name in [
-            (SetupPageView, "setup"),
-            (InstrumentPageView, "session"),
+        # Stacked widget replaces tkinter's overlapping frames
+        self.stack = QStackedWidget()
+        self.window.setCentralWidget(self.stack)
+
+        # Build pages
+        self.pages = {}
+        for PageCls, name in [
+            (SetupPage, "setup"),
+            (InstrumentPage, "session"),
         ]:
-            frame = FrameCls(parent=container, app=self)
-            frame.grid(row=0, column=0, sticky="nsew")
-            self.frames[name] = frame
+            page = PageCls(app=self, main_window=self)
+            self.stack.addWidget(page)
+            self.pages[name] = page
 
         self.show("setup")
 
     def show(self, name: str):
-        self.frames[name].tkraise()
+        """Switch the visible page by name."""
+        self.stack.setCurrentWidget(self.pages[name])
+
+    # Convenience navigation methods called by the page widgets
+    def go_to_setup_page(self):
+        self.show("setup")
+
+    def go_to_instrument_page(self):
+        self.show("session")
 
     def run(self):
-        self.root.mainloop()
+        self.window.show()
+        sys.exit(self.qt_app.exec())
