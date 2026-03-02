@@ -38,7 +38,26 @@ class InstrumentControllerOpus:
         # open function inside opus
         self.opus.open(filepath) 
 
+    def setBlank(self, filepath):
+        path = Path(filepath)
 
+        if not path.exists():
+            print("ERROR: Blank file not found.")
+        
+        folder = str(path.parent)
+        filename = path.name
+
+        # Load the file into OPUS
+        result_1 = self.opus.query(
+            f"COMMAND_LINE Load (0, {{COF=0, DAP='{folder}', DAF='{filename}'}});"
+        )
+
+        # Tell OPUS to use the loaded file as the reference
+        result_2 = self.opus.query(
+            "COMMAND_LINE LoadReference ();"
+        )
+
+        return result_1, result_2
 
     def getSample(self, save_path = None):
 
