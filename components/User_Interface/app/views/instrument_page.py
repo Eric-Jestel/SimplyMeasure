@@ -1,208 +1,399 @@
-import tkinter as tk
-from tkinter import ttk, messagebox
+"""
+Cary 60 UV-Vis Spectrometer GUI — Instrument / Session Screen
+Chemistry Instrumentation — Jack of all Spades
+"""
 
-BTN_BG = "#F7F7F7"
+import pyqtgraph as pg
+from PyQt6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QFrame,
+    QSizePolicy,
+    QLineEdit,
+    QMessageBox,
+)
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
+
+# ── Palette (matches setup_page.py) ──────────────────────────────────────────
+BG = "#E4E4E4"
+BG_INSET = "#DCDCDC"
+BG_BTN = "#C8C8C8"
+BG_BTN_HOV = "#BEBEBE"
+BG_BTN_PRS = "#B0B0B0"
+BORDER = "#CACACA"
+TEXT_MAIN = "#484848"
+TEXT_MUTED = "#909090"
+TEXT_BTN = "#3A3A3A"
 
 
-class InstrumentPageView(ttk.Frame):
-    def __init__(self, parent, app):
+# ── Shared helpers ────────────────────────────────────────────────────────────
+class Panel(QFrame):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setStyleSheet(
+            f"""
+            Panel {{
+                background-color: {BG};
+                border: 1px solid {BORDER};
+                border-radius: 5px;
+            }}
+        """
+        )
+
+
+class InsetBox(QFrame):
+    def __init__(self, text: str = "", parent=None):
+        super().__init__(parent)
+        self.setStyleSheet(
+            f"""
+            QFrame {{
+                background-color: {BG_INSET};
+                border: none;
+                border-radius: 3px;
+            }}
+        """
+        )
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(10, 8, 10, 8)
+        if text:
+            lbl = QLabel(text)
+            lbl.setFont(QFont("Helvetica Neue", 9))
+            lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            lbl.setStyleSheet(
+                f"color: {TEXT_MUTED}; background: transparent; border: none;"
+            )
+            layout.addWidget(lbl)
+
+
+def h_rule():
+    f = QFrame()
+    f.setFrameShape(QFrame.Shape.HLine)
+    f.setFixedHeight(1)
+    f.setStyleSheet(f"background-color: {BORDER}; border: none;")
+    return f
+
+
+class StyledButton(QPushButton):
+    def __init__(self, text: str, large: bool = False, parent=None):
+        super().__init__(text, parent)
+        size = 10 if large else 9
+        height = 46 if large else 38
+        self.setMinimumHeight(height)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setFont(QFont("Helvetica Neue", size))
+        self.setStyleSheet(
+            f"""
+            QPushButton {{
+                background-color: {BG_BTN};
+                color: {TEXT_BTN};
+                border: none;
+                border-radius: 4px;
+                padding: 5px 16px;
+            }}
+            QPushButton:hover   {{ background-color: {BG_BTN_HOV}; }}
+            QPushButton:pressed {{ background-color: {BG_BTN_PRS}; }}
+        """
+        )
+
+
+# ── Panel 1 : Login ───────────────────────────────────────────────────────────
+class LoginPanel(Panel):
+    def __init__(self, app=None, parent=None):
         super().__init__(parent)
         self.app = app
-        self.configure(style="Proto.TFrame")
 
-        PAD = 12
-        GAP = 14
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(8)
 
-        # Grid layout
-        self.grid_rowconfigure(0, weight=0, minsize=190)  # slightly shorter top row
-        self.grid_rowconfigure(1, weight=1)
-
-        self.grid_columnconfigure(0, weight=0, minsize=380)
-        self.grid_columnconfigure(1, weight=0, minsize=380)
-        self.grid_columnconfigure(2, weight=1, minsize=560)
-
-        # Top row
-        login_panel = ttk.Frame(self, style="Panel.TFrame", padding=PAD)
-        steps_panel = ttk.Frame(self, style="Panel.TFrame", padding=PAD)
-        expl_panel = ttk.Frame(self, style="Panel.TFrame", padding=PAD)
-
-        login_panel.grid(row=0, column=0, sticky="nsew", padx=(GAP, 0), pady=(GAP, 0))
-        steps_panel.grid(row=0, column=1, sticky="nsew", padx=(GAP, 0), pady=(GAP, 0))
-        expl_panel.grid(row=0, column=2, sticky="nsew", padx=(GAP, GAP), pady=(GAP, 0))
-
-        # Bottom row
-        left_panel = ttk.Frame(self, style="Panel.TFrame", padding=PAD)
-        plot_panel = ttk.Frame(self, style="Panel.TFrame", padding=PAD)
-
-        left_panel.grid(row=1, column=0, sticky="nsew", padx=(GAP, 0), pady=(GAP, GAP))
-        plot_panel.grid(
-            row=1,
-            column=1,
-            columnspan=2,
-            sticky="nsew",
-            padx=(GAP, GAP),
-            pady=(GAP, GAP),
+        title = QLabel("Enter Username")
+        title.setFont(QFont("Georgia", 13, QFont.Weight.Bold))
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title.setStyleSheet(
+            f"color: {TEXT_MAIN}; background: transparent; border: none;"
         )
+        layout.addWidget(title)
+        layout.addWidget(h_rule())
+        layout.addSpacing(4)
 
-        left_panel.grid_rowconfigure(0, weight=1)
-
-        # Login
-        self._section_title(login_panel, "Enter Username")
-
-        ttk.Label(
-            login_panel, text="Username", font=("TkDefaultFont", 11, "italic")
-        ).pack(pady=(6, 6))
-        self.username_var = tk.StringVar(value=self.app.state.username)
-
-        ttk.Entry(login_panel, textvariable=self.username_var, justify="center").pack(
-            fill="x", padx=18, pady=(0, 12)
+        lbl = QLabel("Username")
+        lbl.setFont(QFont("Helvetica Neue", 9, QFont.Weight.Normal, True))  # italic
+        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lbl.setStyleSheet(
+            f"color: {TEXT_MUTED}; background: transparent; border: none;"
         )
+        layout.addWidget(lbl)
 
-        btn_row = ttk.Frame(login_panel, style="Proto.TFrame")
-        btn_row.pack(fill="x", padx=18)
-        btn_row.grid_columnconfigure((0, 1), weight=1)
-
-        self._boxed_button(btn_row, "Login", self.on_login).grid(
-            row=0, column=0, sticky="ew", padx=(0, 10)
+        self.username_input = QLineEdit()
+        self.username_input.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.username_input.setFont(QFont("Helvetica Neue", 9))
+        self.username_input.setStyleSheet(
+            f"""
+            QLineEdit {{
+                background-color: {BG_INSET};
+                color: {TEXT_MAIN};
+                border: 1px solid {BORDER};
+                border-radius: 4px;
+                padding: 5px 10px;
+            }}
+        """
         )
-        self._boxed_button(btn_row, "Reset", self.on_reset_login).grid(
-            row=0, column=1, sticky="ew"
-        )
+        if app:
+            self.username_input.setText(app.state.username)
+        layout.addWidget(self.username_input)
 
-        # Instructions
-        self._section_title(steps_panel, "Instructions")
+        layout.addSpacing(4)
 
-        steps_inner = ttk.Frame(steps_panel, style="Proto.TFrame")
-        steps_inner.pack(fill="both", expand=True, pady=(10, 0), padx=12)
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(10)
+        self.login_btn = StyledButton("Login")
+        self.login_btn.clicked.connect(self._on_login)
+        self.reset_btn = StyledButton("Reset")
+        self.reset_btn.clicked.connect(self._on_reset)
+        btn_row.addWidget(self.login_btn)
+        btn_row.addWidget(self.reset_btn)
+        layout.addLayout(btn_row)
 
-        self._boxed_button_small(
-            steps_inner, "Step 1: Login", lambda: self.set_explanation(1)
-        ).pack(fill="x", pady=6)
-        self._boxed_button_small(
-            steps_inner, "Step 2: Capture sample", lambda: self.set_explanation(2)
-        ).pack(fill="x", pady=6)
-        self._boxed_button_small(
-            steps_inner, "Step N: …", lambda: self.set_explanation(3)
-        ).pack(fill="x", pady=6)
+        layout.addStretch()
 
-        # Explanation
-        expl_inset = ttk.Frame(expl_panel, style="Inset.TFrame", padding=14)
-        expl_inset.pack(fill="both", expand=True, padx=10, pady=(16, 10))
-
-        self.expl_label = ttk.Label(
-            expl_inset,
-            text="Explanation of step 1,2…",
-            justify="center",
-            font=("TkDefaultFont", 12),
-        )
-        self.expl_label.place(relx=0.5, rely=0.5, anchor="center")
-
-        # Large buttons + clean spacing
-        action_box = ttk.Frame(left_panel, style="Proto.TFrame")
-        action_box.grid(row=1, column=0, sticky="ew", padx=10, pady=10)
-        action_box.grid_columnconfigure(0, weight=1)
-
-        btn_take = self._boxed_button(
-            action_box, "Take sample", self.on_take_sample_and_return
-        )
-        btn_take.grid(row=0, column=0, sticky="ew")
-
-        btn_adv = self._boxed_button(action_box, "Advanced options", self.on_adv)
-        btn_adv.grid(row=1, column=0, sticky="ew", pady=(12, 0))
-
-        # Data viewer
-        self._section_title(plot_panel, "Data viewer")
-
-        inset = ttk.Frame(plot_panel, style="Inset.TFrame")
-        inset.pack(fill="both", expand=True, padx=10, pady=(16, 10))
-
-        canvas = tk.Canvas(inset, background="white", highlightthickness=0)
-        canvas.pack(fill="both", expand=True)
-
-        canvas.create_text(
-            0,
-            0,
-            anchor="center",
-            text=(
-                "Sample data\n\nIncluded:\n"
-                "X-axis title\nY-axis title\n"
-                "X-axis ticks + labels\nY-axis ticks + labels\n\n"
-                "On hover over a line: displays sample name"
-            ),
-            font=("TkDefaultFont", 14),
-            fill="#333",
-        )
-        canvas.bind(
-            "<Configure>", lambda e: canvas.coords(1, e.width // 2, e.height // 2)
-        )
-
-    # Helpers
-    def _section_title(self, parent, text):
-        ttk.Label(parent, text=text, font=("TkDefaultFont", 16, "bold")).pack()
-        ttk.Separator(parent).pack(fill="x", pady=(10, 0))
-
-    def _boxed_button(self, parent, text, command):
-        return tk.Button(
-            parent,
-            text=text,
-            command=command,
-            bg=BTN_BG,
-            activebackground=BTN_BG,
-            relief="solid",
-            borderwidth=2,
-            padx=14,
-            pady=14,
-            font=("TkDefaultFont", 13),
-        )
-
-    def _boxed_button_small(self, parent, text, command):
-        return tk.Button(
-            parent,
-            text=text,
-            command=command,
-            bg=BTN_BG,
-            activebackground=BTN_BG,
-            relief="solid",
-            borderwidth=2,
-            padx=12,
-            pady=8,
-            font=("TkDefaultFont", 12),
-        )
-
-    # Logic
-    def set_explanation(self, step):
-        self.expl_label.configure(text=f"Step {step} explanation placeholder.")
-
-    def on_login(self):
-        self.app.state.username = self.username_var.get().strip()
-        if not self.app.state.username:
-            messagebox.showwarning("Login", "Please enter a username.")
+    def _on_login(self):
+        if not self.app:
             return
-        code = self.app.controller.signIn(self.app.state.username)
+        username = self.username_input.text().strip()
+        if not username:
+            QMessageBox.warning(self, "Login", "Please enter a username.")
+            return
+        self.app.state.username = username
+        code = self.app.controller.signIn(username)
         if code == 0:
-            messagebox.showinfo("Login", f"Logged in as {self.app.state.username}")
+            QMessageBox.information(self, "Login", f"Logged in as {username}")
         else:
-            messagebox.showerror(
+            QMessageBox.critical(
+                self,
                 "Login",
                 self.app.controller.ErrorDictionary.get(code, f"Error code: {code}"),
             )
 
-    def on_reset_login(self):
-        self.username_var.set("")
-        self.app.state.username = ""
+    def _on_reset(self):
+        self.username_input.clear()
+        if self.app:
+            self.app.state.username = ""
 
-    def on_take_sample_and_return(self):
+
+# ── Panel 2 : Instructions ────────────────────────────────────────────────────
+class InstructionsPanel(Panel):
+    def __init__(self, explanation_panel: "ExplanationPanel", parent=None):
+        super().__init__(parent)
+        self.explanation_panel = explanation_panel
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(8)
+
+        title = QLabel("Instructions")
+        title.setFont(QFont("Georgia", 13, QFont.Weight.Bold))
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title.setStyleSheet(
+            f"color: {TEXT_MAIN}; background: transparent; border: none;"
+        )
+        layout.addWidget(title)
+        layout.addWidget(h_rule())
+        layout.addSpacing(4)
+
+        steps = [
+            ("Step 1: Login", 1),
+            ("Step 2: Capture sample", 2),
+            ("Step N: …", 3),
+        ]
+
+        for label, step_num in steps:
+            btn = StyledButton(label)
+            btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            btn.clicked.connect(
+                lambda _, n=step_num: self.explanation_panel.set_step(n)
+            )
+            layout.addWidget(btn)
+
+        layout.addStretch()
+
+
+# ── Panel 3 : Explanation ─────────────────────────────────────────────────────
+class ExplanationPanel(Panel):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 16, 16, 16)
+
+        inset = InsetBox()
+        inset.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+        self.expl_label = QLabel("Explanation of step 1, 2…")
+        self.expl_label.setFont(QFont("Helvetica Neue", 10))
+        self.expl_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.expl_label.setWordWrap(True)
+        self.expl_label.setStyleSheet(
+            f"color: {TEXT_MUTED}; background: transparent; border: none;"
+        )
+        inset.layout().addWidget(self.expl_label)
+
+        layout.addWidget(inset)
+
+    def set_step(self, step: int):
+        self.expl_label.setText(f"Step {step} explanation placeholder.")
+        self.expl_label.setStyleSheet(
+            f"color: {TEXT_MAIN}; background: transparent; border: none;"
+        )
+
+
+# ── Panel 4 : Actions (left bottom) ──────────────────────────────────────────
+class ActionPanel(Panel):
+    def __init__(self, app=None, main_window=None, parent=None):
+        super().__init__(parent)
+        self.app = app
+        self.main_window = main_window
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 18, 16, 18)
+        layout.setSpacing(12)
+        layout.addStretch()
+
+        self.take_btn = StyledButton("Take sample", large=True)
+        self.take_btn.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+        )
+        self.take_btn.clicked.connect(self._on_take_sample)
+        layout.addWidget(self.take_btn)
+
+        self.adv_btn = StyledButton("Advanced options", large=True)
+        self.adv_btn.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+        )
+        self.adv_btn.clicked.connect(self._on_advanced)
+        layout.addWidget(self.adv_btn)
+
+        layout.addStretch()
+
+    def _on_take_sample(self):
+        if not self.app:
+            return
         code, sample = self.app.controller.runLabMachine()
         if code == 0 and sample:
             self.app.state.sample_files.append(sample.name)
-            messagebox.showinfo("Take sample", f"Sample captured: {sample.name}")
-            self.app.show("setup")
+            QMessageBox.information(
+                self, "Take Sample", f"Sample captured:\n{sample.name}"
+            )
+            if self.main_window:
+                self.main_window.go_to_setup_page()
             return
-
-        messagebox.showerror(
-            "Take sample",
+        QMessageBox.critical(
+            self,
+            "Take Sample",
             self.app.controller.ErrorDictionary.get(code, f"Error code: {code}"),
         )
 
-    def on_adv(self):
-        messagebox.showinfo("Advanced options", "Prototype placeholder.")
+    def _on_advanced(self):
+        QMessageBox.information(self, "Advanced Options", "Prototype placeholder.")
+
+
+# ── Panel 5 : Data viewer (plot) ──────────────────────────────────────────────
+class DataViewerPanel(Panel):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(14, 14, 14, 14)
+        layout.setSpacing(8)
+
+        title = QLabel("Data Viewer")
+        title.setFont(QFont("Georgia", 13, QFont.Weight.Bold))
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title.setStyleSheet(
+            f"color: {TEXT_MAIN}; background: transparent; border: none;"
+        )
+        layout.addWidget(title)
+        layout.addWidget(h_rule())
+
+        pg.setConfigOptions(antialias=True, background=BG_INSET, foreground=TEXT_MAIN)
+
+        self.plot_widget = pg.PlotWidget()
+        self.plot_widget.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
+        self.plot_widget.setStyleSheet("border: none; border-radius: 3px;")
+        self.plot_widget.getPlotItem().showGrid(x=True, y=True, alpha=0.3)
+        self.plot_widget.setLabel("bottom", "Wavelength (nm)", color=TEXT_MAIN)
+        self.plot_widget.setLabel("left", "Absorbance (AU)", color=TEXT_MAIN)
+        self.plot_widget.setTitle("Sample Data", color=TEXT_MAIN, size="11pt")
+
+        axis_pen = pg.mkPen(color=BORDER, width=1)
+        for axis in ["bottom", "left", "top", "right"]:
+            self.plot_widget.getPlotItem().getAxis(axis).setPen(axis_pen)
+            self.plot_widget.getPlotItem().getAxis(axis).setTextPen(TEXT_MAIN)
+
+        self.placeholder = pg.TextItem(
+            text="No samples taken yet — use 'Take sample' to begin",
+            color=TEXT_MUTED,
+            anchor=(0.5, 0.5),
+        )
+        self.plot_widget.addItem(self.placeholder)
+        self.placeholder.setPos(0.5, 0.5)
+
+        self._curves = {}
+        layout.addWidget(self.plot_widget)
+
+    def add_sample(self, name: str, x: list, y: list):
+        """Plot a new sample curve. Removes placeholder on first sample."""
+        if not self._curves:
+            self.plot_widget.removeItem(self.placeholder)
+
+        curve = self.plot_widget.plot(x, y, name=name, pen=pg.mkPen(width=1.5))
+        self._curves[name] = curve
+
+
+# ── Instrument Page ───────────────────────────────────────────────────────────
+class InstrumentPage(QWidget):
+    def __init__(self, app=None, main_window=None, parent=None):
+        super().__init__(parent)
+        self.app = app
+        self.main_window = main_window
+        self.setStyleSheet(f"background-color: {BG};")
+
+        root = QVBoxLayout(self)
+        root.setContentsMargins(12, 12, 12, 12)
+        root.setSpacing(8)
+
+        # Top row: Login | Instructions | Explanation
+        top = QHBoxLayout()
+        top.setSpacing(8)
+
+        explanation = ExplanationPanel()
+
+        login = LoginPanel(app=self.app)
+        login.setMinimumWidth(300)
+
+        instructions = InstructionsPanel(explanation_panel=explanation)
+        instructions.setMinimumWidth(300)
+
+        top.addWidget(login, stretch=2)
+        top.addWidget(instructions, stretch=2)
+        top.addWidget(explanation, stretch=3)
+
+        # Bottom row: Actions | Data viewer
+        bottom = QHBoxLayout()
+        bottom.setSpacing(8)
+
+        actions = ActionPanel(app=self.app, main_window=self.main_window)
+        actions.setFixedWidth(260)
+
+        self.data_viewer = DataViewerPanel()
+
+        bottom.addWidget(actions)
+        bottom.addWidget(self.data_viewer)
+
+        root.addLayout(top, stretch=1)
+        root.addLayout(bottom, stretch=3)
