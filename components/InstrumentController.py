@@ -31,9 +31,11 @@ class InstrumentController:
     TIMEOUT_S = 10.0
 
     def __init__(self, debug: bool = False):
-        if (debug):
-            print(f"[InstrumentController][RECEIVED] __init__ payload={{'debug': {debug}}}")
-        
+        if debug:
+            print(
+                f"[InstrumentController][RECEIVED] __init__ payload={{'debug': {debug}}}"
+            )
+
         self.debug = bool(debug)
         self.blank_file = ""
         self.sample_wavelength_nm = 260
@@ -42,7 +44,7 @@ class InstrumentController:
         self.scan_bw = 2
         self.scan_sat = 0.1
 
-        if (debug):
+        if debug:
             print("[InstrumentController][EXECUTED] __init__ result=initialized")
 
     def _debug(self, message: str) -> None:
@@ -189,7 +191,7 @@ class InstrumentController:
         self._print_received("setup")
         try:
             self._debug("setup() starting mailbox clear + PING")
-            #Clears the windows registry
+            # Clears the windows registry
             self._clear_mailbox(reset_file_counter=False)
 
             # Launches the ADL file that communicates with the instrument
