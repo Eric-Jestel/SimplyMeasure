@@ -2,11 +2,11 @@ from brukeropus import Opus
 from pathlib import Path
 import shutil
 import subprocess
-import time
 
 
 # import os
 # import read_opus when using it
+# import time when using it
 
 
 # need a class
