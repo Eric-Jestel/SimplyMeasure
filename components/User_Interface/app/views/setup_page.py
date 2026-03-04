@@ -55,7 +55,7 @@ class StyledButton(QPushButton):
             }}
             QPushButton:hover   {{ background-color: {BG_BTN_HOV}; }}
             QPushButton:pressed {{ background-color: {BG_BTN_PRS}; }}
-        """
+            """
         )
 
 
@@ -70,7 +70,7 @@ class Panel(QFrame):
                 border: 1px solid {BORDER};
                 border-radius: 5px;
             }}
-        """
+            """
         )
 
 
@@ -85,7 +85,7 @@ class InsetBox(QFrame):
                 border: none;
                 border-radius: 3px;
             }}
-        """
+            """
         )
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 8, 10, 8)
@@ -198,7 +198,7 @@ class ConnectionSubPanel(QWidget):
                     selection-color: {TEXT_BTN};
                     border: 1px solid {BORDER};
                 }}
-            """
+                """
             )
 
             layout.addWidget(type_label)
@@ -438,6 +438,11 @@ class PlotPanel(Panel):
         self.plot_widget.setLabel("bottom", "Wavelength (nm)", color=TEXT_MAIN)
         self.plot_widget.setLabel("left", "Absorbance (AU)", color=TEXT_MAIN)
         self.plot_widget.setTitle("Blank Spectrum", color=TEXT_MAIN, size="11pt")
+
+        self.plot_widget.setXRange(300, 900, padding=0)
+        self.plot_widget.setYRange(0, 1.1, padding=0)
+        self.plot_widget.setLimits(xMin=300, xMax=900, yMin=0, yMax=1.1)
+        self.plot_widget.setMouseEnabled(x=False, y=False)
 
         axis_pen = pg.mkPen(color=BORDER, width=1)
         for axis in ["bottom", "left", "top", "right"]:
