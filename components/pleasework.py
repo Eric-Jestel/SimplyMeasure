@@ -1,6 +1,7 @@
 from brukeropus import Opus  # , read_opus
 from pathlib import Path
 import shutil
+
 # import os
 
 
@@ -53,9 +54,7 @@ class InstrumentControllerOpus:
         )
 
         # Tell OPUS to use the loaded file as the reference
-        result_2 = self.opus.query(
-            "COMMAND_LINE LoadReference ();"
-        )
+        result_2 = self.opus.query("COMMAND_LINE LoadReference ();")
 
         return result_1, result_2
 
