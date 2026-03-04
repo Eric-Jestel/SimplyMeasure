@@ -127,10 +127,10 @@ class InstrumentControllerOpus:
     def changeSettings(
         self, waveStart=None, waveStop=None
     ):  # waveStart is the High end
-        if waveStart != None:
+        if waveStart is not None:
             self.sampleSettings["hfw"] = waveStart
 
-        if waveStop != None:
+        if waveStop is not None:
             self.sampleSettings["lfw"] = waveStop
 
         return self.sampleSettings
