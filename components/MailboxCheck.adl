@@ -18,7 +18,7 @@ Function RegResetParam(ROOT$)
   RegWrite(HKEY_CURRENT_USER, ROOT$, "Param", "Filename", "")
   RegWrite(HKEY_CURRENT_USER, ROOT$, "Param", "WavelengthStart", "")
   RegWrite(HKEY_CURRENT_USER, ROOT$, "Param", "WavelengthStop", "")
-  RegWrite(HKEY_CURRENT_USER, ROOT$, "Param", "Satuation", "")
+  RegWrite(HKEY_CURRENT_USER, ROOT$, "Param", "Saturation", "")
   RegWrite(HKEY_CURRENT_USER, ROOT$, "Param", "Banwidth", "")
 End Function
 
