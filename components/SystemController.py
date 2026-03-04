@@ -244,7 +244,7 @@ class SystemController:
                     if sent:
                         # logs data successfully being sent
                         self._print_executed("runLabMachine", (0, csv_path))
-                        return 000, data
+                        return 000, csv_path
                     # logs data unsuccessfully being sent
                     self._print_executed("runLabMachine", (110, None))
                     return 110, None
