@@ -42,8 +42,8 @@ class InstrumentController:
         self.instrumentParams = {
             "waveStart": 600,
             "waveStop": 500,
-            "saturation": .1,
-            "bandwidth": 2
+            "saturation": 0.1,
+            "bandwidth": 2,
         }
 
         if debug:
@@ -335,16 +335,24 @@ class InstrumentController:
         return sample
 
     def changeSettings(self, waveStart="", waveStop="", saturation="", bandwidth=""):
-        
-        self.instrumentParams["waveStart"] = waveStart or self.instrumentParams["waveStart"]
-        self.instrumentParams["waveStop"] = waveStop or self.instrumentParams["waveStop"]
-        self.instrumentParams["saturation"] = saturation or self.instrumentParams["saturation"]
-        self.instrumentParams["bandwidth"] = bandwidth or self.instrumentParams["bandwidth"]
+
+        self.instrumentParams["waveStart"] = (
+            waveStart or self.instrumentParams["waveStart"]
+        )
+        self.instrumentParams["waveStop"] = (
+            waveStop or self.instrumentParams["waveStop"]
+        )
+        self.instrumentParams["saturation"] = (
+            saturation or self.instrumentParams["saturation"]
+        )
+        self.instrumentParams["bandwidth"] = (
+            bandwidth or self.instrumentParams["bandwidth"]
+        )
 
         reply = self._send_and_wait("SETTING", self.instrumentParams)
 
         return self._is_success(reply)
-    
+
     def getSettings(self):
         """
         Returns a dictionairy containing the 4 parameters of the instrument
@@ -365,8 +373,8 @@ class InstrumentController:
         self.instrumentParams = {
             "waveStart": 600,
             "waveStop": 500,
-            "saturation": .1,
-            "bandwidth": 2
+            "saturation": 0.1,
+            "bandwidth": 2,
         }
         params = self.instrumentParams
         reply = self._send_and_wait("SETTING", params)
@@ -384,7 +392,6 @@ class InstrumentController:
 
         reply = self._send_and_wait("SHUTDOWN", {})
         return self._is_success(reply)
-    
 
 
 # print("Launched. Wait 10 seconds")
