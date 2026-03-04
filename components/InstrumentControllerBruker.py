@@ -80,7 +80,6 @@ class InstrumentControllerOpus:
         print("Saved sample to:", str(sample_path))
 
         if save_path is not None:
-        if save_path is not None:
             save_path = Path(save_path)
             save_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.move(sample_path, str(save_path))
