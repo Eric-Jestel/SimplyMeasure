@@ -297,7 +297,9 @@ class ActionPanel(Panel):
         )
 
     def _on_advanced(self):
-        QMessageBox.information(self, "Advanced Options", "Prototype placeholder.")
+        from app.dialogs.advanced_options import AdvancedOptionsDialog
+        dialog = AdvancedOptionsDialog(parent=self, app=self.app)
+        dialog.exec()
 
 
 # ── Panel 5 : Data viewer (plot) ──────────────────────────────────────────────
@@ -329,6 +331,11 @@ class DataViewerPanel(Panel):
         self.plot_widget.setLabel("bottom", "Wavelength (nm)", color=TEXT_MAIN)
         self.plot_widget.setLabel("left", "Absorbance (AU)", color=TEXT_MAIN)
         self.plot_widget.setTitle("Sample Data", color=TEXT_MAIN, size="11pt")
+
+        self.plot_widget.setXRange(300, 900, padding=0)
+        self.plot_widget.setYRange(0, 1.1, padding=0)
+        self.plot_widget.setLimits(xMin=300, xMax=900, yMin=0, yMax=1.1)
+        self.plot_widget.setMouseEnabled(x=False, y=False)
 
         axis_pen = pg.mkPen(color=BORDER, width=1)
         for axis in ["bottom", "left", "top", "right"]:
