@@ -1,7 +1,8 @@
 from brukeropus import Opus  # , read_opus
 from pathlib import Path
 import shutil
-
+import subprocess
+import time
 # import os
 
 
@@ -17,6 +18,12 @@ class InstrumentControllerOpus:
 
         # Data in the blank file. Saved as a Opus object
         self.blankData = None
+
+        # Settings for measuring samples
+        self.sampleSettings = {}
+
+        # Path to Opus software
+        self.opusExePath = r"C:\Program Files\Bruker\OPUS\OPUS.exe"  # change to actual path to opus software
 
     # ------------------------------------------------------------------------------------------------------------------------------------------
     def getBlank(self):
@@ -61,7 +68,7 @@ class InstrumentControllerOpus:
     def getSample(self, save_path=None):
 
         print("Taking Sample...")
-        sample_path = self.opus.measure_sample(unload=True)
+        sample_path = self.opus.measure_sample(unload=True, **self.sampleSettings)
         print("Saved sample to:", str(sample_path))
 
         if save_path is not None:
@@ -71,6 +78,56 @@ class InstrumentControllerOpus:
             print("Moved sample to:", str(save_path))
 
         return sample_path
+
+    # This function checks that the instrument is connected and checks the opus version
+    def ping(self) -> bool:
+        try:
+            if not self.opus.connected:
+                self.opus.connect()
+
+            version = self.opus.get_version()
+            print("OPUS responded:", version)
+            return True
+
+        except Exception as e:
+            print("OPUS ping failed:", e)
+            return False
+
+
+    def setup(self, launch_opus=True) -> bool:
+        # Launch OPUS (GUI)
+        if launch_opus:
+            try:
+                subprocess.Popen([self.opus_exe_path])  # starts OPUS Software
+                print("OPUS launched.")
+            except Exception as e:
+                print("Failed to launch OPUS:", e)
+                return False
+
+        # Wait for the human to log in
+        print("Please log into OPUS.")
+        input("Press ENTER here *after* OPUS is open and you are fully logged in... ")
+
+        # Connect ONCE and verify OPUS responds
+        try:
+            self.opus = Opus()
+            _ = self.opus.get_version()  # Checks connection
+            print("Connected to OPUS.")
+            return True
+        except Exception as e:
+            print("Could not connect to OPUS (are you logged in?):", e)
+            return False
+
+    def changeSettings(self, waveStart=None, waveStop=None): # waveStart is the High end
+
+        if waveStart != None:
+            self.sampleSettings["hfw"] = waveStart
+        
+        if waveStop != None:
+            self.sampleSettings["lfw"] = waveStop
+        
+        return self.sampleSettings
+
 
     def disconnect(self):
         pass
