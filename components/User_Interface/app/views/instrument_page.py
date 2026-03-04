@@ -34,29 +34,25 @@ TEXT_BTN = "#3A3A3A"
 class Panel(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setStyleSheet(
-            f"""
+        self.setStyleSheet(f"""
             Panel {{
                 background-color: {BG};
                 border: 1px solid {BORDER};
                 border-radius: 5px;
             }}
-        """
-        )
+        """)
 
 
 class InsetBox(QFrame):
     def __init__(self, text: str = "", parent=None):
         super().__init__(parent)
-        self.setStyleSheet(
-            f"""
+        self.setStyleSheet(f"""
             QFrame {{
                 background-color: {BG_INSET};
                 border: none;
                 border-radius: 3px;
             }}
-        """
-        )
+        """)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 8, 10, 8)
         if text:
@@ -85,8 +81,7 @@ class StyledButton(QPushButton):
         self.setMinimumHeight(height)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFont(QFont("Helvetica Neue", size))
-        self.setStyleSheet(
-            f"""
+        self.setStyleSheet(f"""
             QPushButton {{
                 background-color: {BG_BTN};
                 color: {TEXT_BTN};
@@ -96,8 +91,7 @@ class StyledButton(QPushButton):
             }}
             QPushButton:hover   {{ background-color: {BG_BTN_HOV}; }}
             QPushButton:pressed {{ background-color: {BG_BTN_PRS}; }}
-        """
-        )
+        """)
 
 
 # ── Panel 1 : Login ───────────────────────────────────────────────────────────
@@ -131,8 +125,7 @@ class LoginPanel(Panel):
         self.username_input = QLineEdit()
         self.username_input.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.username_input.setFont(QFont("Helvetica Neue", 9))
-        self.username_input.setStyleSheet(
-            f"""
+        self.username_input.setStyleSheet(f"""
             QLineEdit {{
                 background-color: {BG_INSET};
                 color: {TEXT_MAIN};
@@ -140,8 +133,7 @@ class LoginPanel(Panel):
                 border-radius: 4px;
                 padding: 5px 10px;
             }}
-        """
-        )
+        """)
         if app:
             self.username_input.setText(app.state.username)
         layout.addWidget(self.username_input)
@@ -298,6 +290,7 @@ class ActionPanel(Panel):
 
     def _on_advanced(self):
         from app.dialogs.advanced_options import AdvancedOptionsDialog
+
         dialog = AdvancedOptionsDialog(parent=self, app=self.app)
         dialog.exec()
 

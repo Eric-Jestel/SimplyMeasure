@@ -1,18 +1,15 @@
-from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QLabel, QGroupBox, QPushButton
-)
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QGroupBox, QPushButton
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
-
 # ── Palette ─────────────────────
-BG         = "#E4E4E4"
-BG_BTN     = "#C8C8C8"
+BG = "#E4E4E4"
+BG_BTN = "#C8C8C8"
 BG_BTN_HOV = "#BEBEBE"
 BG_BTN_PRS = "#B0B0B0"
-BORDER     = "#CACACA"
-TEXT_MAIN  = "#484848"
-TEXT_BTN   = "#3A3A3A"
+BORDER = "#CACACA"
+TEXT_MAIN = "#484848"
+TEXT_BTN = "#3A3A3A"
 
 
 class StyledButton(QPushButton):
@@ -21,8 +18,7 @@ class StyledButton(QPushButton):
         self.setMinimumHeight(36)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFont(QFont("Helvetica Neue", 9))
-        self.setStyleSheet(
-            f"""
+        self.setStyleSheet(f"""
             QPushButton {{
                 background-color: {BG_BTN};
                 color: {TEXT_BTN};
@@ -32,8 +28,7 @@ class StyledButton(QPushButton):
             }}
             QPushButton:hover   {{ background-color: {BG_BTN_HOV}; }}
             QPushButton:pressed {{ background-color: {BG_BTN_PRS}; }}
-            """
-        )
+            """)
 
 
 class AdvancedOptionsDialog(QDialog):
@@ -59,8 +54,7 @@ class AdvancedOptionsDialog(QDialog):
         # Blank options group
         blank_group = QGroupBox("Blank options")
         blank_group.setFont(QFont("Helvetica Neue", 9))
-        blank_group.setStyleSheet(
-            f"""
+        blank_group.setStyleSheet(f"""
             QGroupBox {{
                 color: {TEXT_MAIN};
                 border: 1px solid {BORDER};
@@ -72,16 +66,15 @@ class AdvancedOptionsDialog(QDialog):
                 subcontrol-origin: margin;
                 left: 10px;
             }}
-            """
-        )
+            """)
 
         blank_layout = QVBoxLayout(blank_group)
         blank_layout.setSpacing(6)
 
         for label, handler in [
-            ("Capture Blank",        None),
+            ("Capture Blank", None),
             ("Load Blank from File", None),
-            ("Reset Blank",          None),
+            ("Reset Blank", None),
         ]:
             btn = StyledButton(label)
             if handler:
