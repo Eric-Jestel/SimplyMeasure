@@ -247,8 +247,8 @@ class ExplanationPanel(Panel):
     def set_step(self, step: int):
         explanations = {
             1: "Log in by entering your ICN username.",
-            2: '''Place your sample in the instrument. Ensure the sample holder is clean and properly positioned.
-            The smooth side of Cuvette should be facing the camera.''',
+            2: """Place your sample in the instrument. Ensure the sample holder is clean and properly positioned.
+            The smooth side of Cuvette should be facing the camera.""",
             3: "Press Capture to begin the measurement. Do not move the sample until the reading is complete.",
         }
 
