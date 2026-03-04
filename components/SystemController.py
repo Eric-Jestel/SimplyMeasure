@@ -235,15 +235,15 @@ class SystemController:
                         if fileSent[0] == csv_path:
                             self._print_executed("runLabMachine", (0, csv_path))
                             return 000, csv_path
-                    self._print_received("ServerController.send_data", data)
-                    sent = self.ServController.send_data(data)
+                    self._print_received("ServerController.send_data", csv_path)
+                    sent = self.ServController.send_data(csv_path)
                     # logs functionality of sending data
                     self._print_executed("ServerController.send_data", sent)
                     self._debug(f"runLabMachine() send_data -> {sent}")
                     # verifies the data was sent successfully
                     if sent:
                         # logs data successfully being sent
-                        self._print_executed("runLabMachine", (0, data))
+                        self._print_executed("runLabMachine", (0, csv_path))
                         return 000, data
                     # logs data unsuccessfully being sent
                     self._print_executed("runLabMachine", (110, None))
