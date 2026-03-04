@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
+
 # ── Palette ──────────────────────────────────────────
 BG = "#E4E4E4"
 BG_INSET = "#DCDCDC"
@@ -104,7 +105,7 @@ class LoginPanel(Panel):
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(8)
 
-        title = QLabel("Enter Username")
+        title = QLabel("Login")
         title.setFont(QFont("Georgia", 13, QFont.Weight.Bold))
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title.setStyleSheet(
@@ -114,7 +115,7 @@ class LoginPanel(Panel):
         layout.addWidget(h_rule())
         layout.addSpacing(4)
 
-        lbl = QLabel("Username")
+        lbl = QLabel("Enter Username")
         lbl.setFont(QFont("Helvetica Neue", 9, QFont.Weight.Normal, True))  # italic
         lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl.setStyleSheet(
@@ -198,8 +199,8 @@ class InstructionsPanel(Panel):
 
         steps = [
             ("Step 1: Login", 1),
-            ("Step 2: Capture sample", 2),
-            ("Step N: …", 3),
+            ("Step 2: Load Sample", 2),
+            ("Step 3: Capture Sample", 3),
         ]
 
         for label, step_num in steps:
@@ -224,7 +225,7 @@ class ExplanationPanel(Panel):
         inset = InsetBox()
         inset.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
-        self.expl_label = QLabel("Explanation of step 1, 2…")
+        self.expl_label = QLabel("Log in by entering your ICN username.")
         self.expl_label.setFont(QFont("Helvetica Neue", 10))
         self.expl_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.expl_label.setWordWrap(True)
@@ -236,7 +237,14 @@ class ExplanationPanel(Panel):
         layout.addWidget(inset)
 
     def set_step(self, step: int):
-        self.expl_label.setText(f"Step {step} explanation placeholder.")
+        explanations = {
+            1: "Log in by entering your ICN username.",
+            2: "Place your sample in the instrument. Ensure the sample holder is clean and properly positioned. The smooth side of Cuvette should be facing the camera.",
+            3: "Press Capture to begin the measurement. Do not move the sample until the reading is complete.",
+        }
+
+        text = explanations.get(step, "No explanation available.")
+        self.expl_label.setText(text)
         self.expl_label.setStyleSheet(
             f"color: {TEXT_MAIN}; background: transparent; border: none;"
         )
@@ -252,14 +260,13 @@ class ActionPanel(Panel):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 18, 16, 18)
         layout.setSpacing(12)
-        layout.addStretch()
 
         self.take_btn = StyledButton("Take sample", large=True)
         self.take_btn.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
         self.take_btn.clicked.connect(self._on_take_sample)
-        layout.addWidget(self.take_btn)
+        layout.addWidget(self.take_btn, stretch=1)
 
         self.adv_btn = StyledButton("Advanced options", large=True)
         self.adv_btn.setSizePolicy(
@@ -267,8 +274,6 @@ class ActionPanel(Panel):
         )
         self.adv_btn.clicked.connect(self._on_advanced)
         layout.addWidget(self.adv_btn)
-
-        layout.addStretch()
 
     def _on_take_sample(self):
         if not self.app:

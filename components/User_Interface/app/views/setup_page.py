@@ -215,7 +215,7 @@ class ConnectionSubPanel(QWidget):
         right.setSpacing(6)
         right.addWidget(self.status_box)
 
-        reconnect_btn = StyledButton("Reconnect")
+        reconnect_btn = StyledButton("Connect")
         reconnect_btn.setFixedWidth(140)
         if reconnect_cmd:
             reconnect_btn.clicked.connect(reconnect_cmd)
@@ -255,7 +255,7 @@ class StatusPanel(Panel):
 
         self.instr_sub = ConnectionSubPanel(
             "Instrument Information",
-            "Instrument information",
+            "Ensure USB Connection to Instrument",
             show_instrument_selector=True,
             reconnect_cmd=self._on_reconnect_instrument,
         )
@@ -269,7 +269,9 @@ class StatusPanel(Panel):
 
         self.server_sub = ConnectionSubPanel(
             "ICN Server Information",
-            "Server Diagnostic\nInformation",
+            "Click Button to reconnect to server\n" \
+            "If connection cannot be established visit:\n" \
+            "https://example.com/support",
             reconnect_cmd=self._on_reconnect_server,
         )
         layout.addWidget(self.server_sub, stretch=1)

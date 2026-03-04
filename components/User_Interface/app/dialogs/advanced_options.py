@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QGroupBox, QPushButton
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
+
 # ── Palette ─────────────────────
 BG = "#E4E4E4"
 BG_BTN = "#C8C8C8"
