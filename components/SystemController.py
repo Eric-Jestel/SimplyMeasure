@@ -187,7 +187,7 @@ class SystemController:
                     self._print_executed("ServerController.send_all_data", sent)
                     self._debug(f"runLabMachine() send_all_data -> {sent}")
                     for fileSent in sent:
-                        if fileSent[1] == False:
+                        if fileSent[1] is False:
                             self._debug(f"runLabMachine() failed to send {fileSent[0]}")
                         if fileSent[0] == csv_path:
                             self._print_executed("runLabMachine", (0, csv_path))

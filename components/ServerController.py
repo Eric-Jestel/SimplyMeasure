@@ -7,10 +7,6 @@ import json
 from pathlib import Path
 from datetime import datetime, timezone
 
-try:
-    from Sample import Sample
-except ImportError:
-    from components.Sample import Sample
 
 print("ServerController module loaded")
 
