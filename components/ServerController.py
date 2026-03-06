@@ -1,18 +1,11 @@
 # This is the server controller
 
-# import Sample
-# import time
-
 import requests
 from dotenv import load_dotenv
 import os
+import json
 from pathlib import Path
 from datetime import datetime, timezone
-
-try:
-    from Sample import Sample
-except ImportError:
-    from components.Sample import Sample
 
 print("ServerController module loaded")
 
@@ -238,7 +231,7 @@ class ServerController:
         for filepath in p.iterdir():
             if not filepath.is_file():
                 continue
-            if filepath.suffix.lower() not in {".csv", ".txt"}:
+            if filepath.suffix.lower() != ".json":
                 continue
 
             stem = filepath.stem
@@ -255,9 +248,6 @@ class ServerController:
                 self.login(owner)
 
             if self.send_data(str(filepath)):
-                # rename to sent
-                new_name = f"{owner}_{dt_str}_sent{filepath.suffix}"
-                filepath.rename(filepath.with_name(new_name))
                 sent = True
 
             successes.append((filepath.name, sent))
@@ -266,45 +256,6 @@ class ServerController:
         self._print_executed("send_all_data", successes)
 
         return successes
-
-    def _build_payload_from_sample_obj(self, sample: Sample):
-        self._print_received(
-            "_build_payload_from_sample_obj",
-            {"sample_name": getattr(sample, "name", None)},
-        )
-        if sample is None:
-            self._print_executed("_build_payload_from_sample_obj", None)
-            return None
-
-        now_iso = datetime.now(timezone.utc).isoformat()
-        data_points = []
-        for idx, value in enumerate(sample.data or []):
-            try:
-                absorbance = float(value)
-            except (TypeError, ValueError):
-                continue
-            wavelength = float(idx) * float(sample.interval or 1.0)
-            data_points.append({"wavelength": wavelength, "absorbance": absorbance})
-
-        payload = {
-            "sampleID": sample.name,
-            "owner": self.user,
-            "datetime": now_iso,
-            "ranges": [],
-            "settings": {
-                "type": getattr(sample, "type", "unknown"),
-                "interval": str(getattr(sample, "interval", "")),
-            },
-            "data": data_points,
-        }
-        self._debug(
-            f"_build_payload_from_sample_obj() sample={sample.name}, points={len(data_points)}"
-        )
-        self._print_executed(
-            "_build_payload_from_sample_obj",
-            {"sampleID": payload.get("sampleID"), "points": len(data_points)},
-        )
-        return payload
 
     def send_data(self, samplePath):
         """
@@ -317,179 +268,100 @@ class ServerController:
             Boolean: True if it successful send all unsent data
         """
 
+        filename_split = Path(samplePath).stem.split("_")
+
+        if len(filename_split) < 3:
+            self._debug(f"send_data() invalid filename format: {samplePath}")
+            self._print_executed("send_data", False)
+            return False
+
+        username = filename_split[0]
+
+        data_key = filename_split[1]
+
         self._print_received("send_data", {"samplePath": str(samplePath)})
-        # ensure logged in and session valid
+        # ensure logged in as file owner and session valid
+        if self.user != username or not self.is_logged_in():
+            if not self.login(username):
+                self._debug(f"send_data() login failed for owner={username}")
+                self._print_executed("send_data", False)
+                return False
+
         if not self.is_logged_in():
             self._debug("send_data() rejected: not logged in")
             self._print_executed("send_data", False)
             return False
 
-        if isinstance(samplePath, Sample):
-            parsed = self._build_payload_from_sample_obj(samplePath)
-            source_desc = f"Sample(name={samplePath.name})"
-        else:
-            parsed = self.parse_sample(samplePath)
-            source_desc = str(samplePath)
-
-        if not parsed:
-            self._debug(f"send_data() parse failed source={source_desc}")
-            self._print_executed("send_data", False)
-            return False
-
-        data_key = parsed.get("datetime")
-        data_array = parsed.get("data", [])
-
         url_input = self.api_url.format(
-            link_end="instrument_data_upload", api_key=self.api_key
+            link_end="instrument-data-upload", api_key=self.api_key
         )
+
+        with open(samplePath, "r") as f:
+            dataArray = []
+            for line in f:
+                stripped = line.strip()
+                if not stripped or stripped in {"[", "]"}:
+                    continue
+                if stripped.endswith(","):
+                    stripped = stripped[:-1]
+                dataArray.append(json.loads(stripped))
 
         json_input = {
             "sessionUUID": self.UUID,
             "dataKey": data_key,
-            "dataArray": data_array,
+            "dataArray": dataArray,
         }
 
+        response = requests.post(url_input, json=json_input, timeout=10)
+        payload = response.json()
+        self._debug(f"TX POST {url_input} payload={json_input}")
         self._debug(
-            f"TX POST {url_input} source={source_desc}, dataKey={data_key}, points={len(data_array)}"
+            f"RX status_code={response.status_code}, success={payload.get('success')}, user={username}"
         )
-        self._print_tx("POST", url_input, json_input)
 
-        try:
-            response = requests.post(url_input, json=json_input, timeout=15)
-            payload = response.json()
-            self._debug(
-                f"RX status_code={response.status_code}, success={payload.get('success')}"
+        if payload.get("success"):
+            rename_to_sent = Path(samplePath).with_name(
+                Path(samplePath).stem.replace("unsent", "sent")
+                + Path(samplePath).suffix
             )
-            if payload.get("success"):
-                self._print_executed("send_data", True)
-                return True
-        except Exception as exc:
-            self._debug(f"send_data() exception: {exc}")
-            self._print_executed("send_data", False)
-            return False
+            Path(samplePath).rename(rename_to_sent)
+            return True
 
         self._print_executed("send_data", False)
         return False
 
-    def parse_sample(self, sampleName):
+    def parse_csv(self, filepath):
         """
-        Converts a sample to a JSON object that can be sent to ICN
-
+        Takes in a csv file, then converts it into a JSON file.
+        username_datetime_unsent.json is the ouputted file in the to be sent folder
         Args:
-            sampleName (String): The name of the sample that is being converted
-
+            filepath (String): The path to the csv file that is being converted to JSON
         Returns:
-            JSON: The JSON object that represents the sample
+            boolean: True if the file was successfully parsed, False if not
         """
 
-        self._print_received("parse_sample", {"sampleName": sampleName})
-        # sampleName can be absolute or relative to file_dir
-        p = Path(sampleName)
-        if not p.exists():
-            p = Path(self.file_dir) / sampleName
-        if not p.exists():
-            self._debug(f"parse_sample() missing file: {sampleName}")
-            self._print_executed("parse_sample", None)
-            return None
+        filename_datetime = Path(filepath).stem
+        filename_username = self.user
+        filename_suffix = "_unsent.json"
 
-        stem = p.stem
-        parts = stem.rsplit("_", 2)
-        if len(parts) != 3:
-            self._debug(f"parse_sample() invalid filename format: {p.name}")
-            self._print_executed("parse_sample", None)
-            return None
-        owner, dt_str, flag = parts
-
-        # validate datetime
-        try:
-            _ = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
-        except Exception:
-            self._debug(f"parse_sample() invalid datetime token: {dt_str}")
-            self._print_executed("parse_sample", None)
-            return None
-
-        ranges = []
-        settings = {}
-        data = []
-
-        with open(p, "r", encoding="utf-8") as f:
-            for raw in f:
-                # do not strip fixed-width positions; only remove trailing newline
-                line = raw.rstrip("\n")
-                if not line.strip():
-                    continue
-                # tag is the first token before a space
-                parts = line.split(" ", 1)
-                tag = parts[0].upper()
-                rest = parts[1] if len(parts) > 1 else ""
-
-                if tag == "SETTING":
-                    # SETTING {32-char name}{1 space}{32-char value}
-                    name_field = rest[0:32]
-                    # skip the single space at position 32
-                    value_field = rest[33 : 33 + 32] if len(rest) >= 33 else rest[32:]
-                    name = name_field.rstrip()
-                    value = value_field.rstrip()
-                    if name:
-                        settings[name] = value
-
-                elif tag == "DATA":
-                    # DATA {12-char wavelength}{1 space}{13-char absorbance}
-                    wav_field = rest[0:12]
-                    abs_field = rest[13 : 13 + 13] if len(rest) >= 13 else rest[12:]
-                    try:
-                        wav = float(wav_field.strip())
-                    except Exception:
-                        continue
-                    try:
-                        absv = float(abs_field.strip())
-                    except Exception:
-                        continue
-                    data.append({"wavelength": wav, "absorbance": absv})
-
-                elif tag == "RANGE":
-                    # RANGE {12-char low}{1 space}{12-char high}{1 space}{4-char num}
-                    low_field = rest[0:12]
-                    high_field = rest[13 : 13 + 12] if len(rest) >= 25 else rest[12:]
-                    num_field = rest[26 : 26 + 4] if len(rest) >= 30 else rest[24:]
-                    try:
-                        low = float(low_field.strip())
-                    except Exception:
-                        low = None
-                    try:
-                        high = float(high_field.strip())
-                    except Exception:
-                        high = None
-                    try:
-                        num = int(num_field.strip()) if num_field.strip() else None
-                    except Exception:
-                        num = None
-                    ranges.append({"low": low, "high": high, "num": num})
-
-                else:
-                    # Unknown tag — attempt to parse whitespace-separated numeric pair
-                    tokens = [t for t in line.split() if t]
-                    if len(tokens) >= 2:
-                        try:
-                            wav = float(tokens[0])
-                            absv = float(tokens[1])
-                            data.append({"wavelength": wav, "absorbance": absv})
-                        except Exception:
-                            pass
-
-        parsed = {
-            "sampleID": stem,
-            "owner": owner,
-            "datetime": dt_str,
-            "ranges": ranges,
-            "settings": settings,
-            "data": data,
-        }
-        self._debug(
-            f"parse_sample() parsed sampleID={stem}, ranges={len(ranges)}, data_points={len(data)}"
+        out_path = (
+            Path(self.file_dir)
+            / f"{filename_username}_{filename_datetime}{filename_suffix}"
         )
-        self._print_executed(
-            "parse_sample",
-            {"sampleID": stem, "ranges": len(ranges), "data_points": len(data)},
-        )
-        return parsed
+
+        with open(filepath, "r") as f:
+            lines = f.readlines()
+
+        with open(out_path, "w") as f:
+            f.write("[\n")
+            for line in lines[2:-1]:
+                f.write(
+                    '{"nm": '
+                    + line.split(",")[0]
+                    + ', "abs": '
+                    + line.split(",")[1]
+                    + "}\n"
+                )
+            f.write("]")
+
+        return True

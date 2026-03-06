@@ -1,34 +1,34 @@
 ' CaryBridge_Logger.ADL
 ' Reads registry mailbox commands and writes each command to sequentially numbered files.
 
-Sub RegStatusWrite(ROOT$, cmdId$, status$)
+Function RegStatusWrite(ROOT$, cmdId$, status$)
   RegWrite(HKEY_CURRENT_USER, ROOT$, "State", "Status", status$)
   RegWrite(HKEY_CURRENT_USER, ROOT$, "State", "ReplyId", cmdId$)
-End Sub
+End Function
 
-Sub RegResetState(ROOT$, status$)
+Function RegResetState(ROOT$, status$)
   RegWrite(HKEY_CURRENT_USER, ROOT$, "State", "Status", status$)
   RegWrite(HKEY_CURRENT_USER, ROOT$, "State", "Error", "")
   RegWrite(HKEY_CURRENT_USER, ROOT$, "State", "ReplyId", "")
   RegWrite(HKEY_CURRENT_USER, ROOT$, "State", "ResultPath", "")
-End Sub
+End Function
 
-Sub RegResetParam(ROOT$)
+Function RegResetParam(ROOT$)
   RegWrite(HKEY_CURRENT_USER, ROOT$, "Param", "Json", "")
   RegWrite(HKEY_CURRENT_USER, ROOT$, "Param", "Filename", "")
   RegWrite(HKEY_CURRENT_USER, ROOT$, "Param", "WavelengthStart", "")
   RegWrite(HKEY_CURRENT_USER, ROOT$, "Param", "WavelengthStop", "")
-  RegWrite(HKEY_CURRENT_USER, ROOT$, "Param", "Satuation", "")
+  RegWrite(HKEY_CURRENT_USER, ROOT$, "Param", "Saturation", "")
   RegWrite(HKEY_CURRENT_USER, ROOT$, "Param", "Banwidth", "")
-End Sub
+End Function
 
-Sub Settings(bandwidth#, saturation#, wavelengthStart%, wavelengthStop%)
+Function Settings(bandwidth#, saturation#, wavelengthStart#, wavelengthStop#)
   SetVal("Common Slit Width", bandwidth#)
   SetVal("Common SAT", saturation#)
   SetVal("Scan Mode", Scan_Mode_nm)
-  SetVal("Scan Start", wavelengthStart%)
-  SetVal("Scan Stop", wavelengthStop%)
-End Sub
+  SetVal("Scan Start", wavelengthStart#)
+  SetVal("Scan Stop", wavelengthStop#)
+End Function
 
 Function Ping$
   If IsInstOnline Then
@@ -40,56 +40,50 @@ Function Ping$
   End If
 End Function
 
-Function WriteToFile$(filename$, data$)
-  ' Write command to file (uppercase)
-  On Error GoTo WriteFail
+' Function WriteToFile$(filename$, data$)
+'   ' Write command to file (uppercase)
+'   On Error GoTo WriteFail
 
-  f = 1
-  Open filename$ For Output As #f
-  Print #f, UCase(data$)
-  Close #f
+'   f = 1
+'   Open filename$ For Output As #f
+'   Print #f, UCase(data$)
+'   Close #f
 
-  ' Acknowledge to Python
-  RegWrite(HKEY_CURRENT_USER, ROOT$, "State", "ResultPath", filename$)
-  WriteToFile = "DONE"
+'   ' Acknowledge to Python
+'   RegWrite(HKEY_CURRENT_USER, ROOT$, "State", "ResultPath", filename$)
+'   WriteToFile = "DONE"
 
-  Exit Sub
+'   Exit Function 
 
-  WriteFail:
-    ' Best-effort error reporting
-    On Error Resume Next
-    Close #1
-    RegWrite(HKEY_CURRENT_USER, ROOT$, "State", "Error", "Failed to write: " + filename$)
-    WriteToFile = "ERROR"
-    On Error GoTo 0
-End Function
+'   WriteFail:
+'     ' Best-effort error reporting
+'     On Error Resume Next
+'     Close #1
+'     RegWrite(HKEY_CURRENT_USER, ROOT$, "State", "Error", "Failed to write: " + filename$)
+'     WriteToFile = "ERROR"
+'     On Error GoTo 0
+' End Function
 
 
 Sub Main
 
   defaultBandwidth# = 2
   defaultSaturation# = 0.1
-  defaultWavelengthStart% = 600
-  defaultWavelengthStop% = 500
+  defaultWavelengthStart# = 600
+  defaultWavelengthStop# = 500
 
   bandwidth# = defaultBandwidth#
   saturation# = defaultSaturation#
-  wavelengthStart% = defaultWavelengthStart%
-  wavelengthStop% = defaultWavelengthStop%
+  wavelengthStart# = defaultWavelengthStart#
+  wavelengthStop# = defaultWavelengthStop#
 
   folder = "C:\Users\Agilent Cary 60\Documents\SoftwareDev - dont delete\Scans\"
   scanfile = "Scan4.csv"
 
   Const ROOT$   = "\Software\GenChem\CaryBridge"
-  Const OUTDIR$ = "C:\Users\Agilent Cary 60\Documents\SoftwareDev - dont delete\ADL Scripts"
 
   ' (Optional) minimize host window so it stays out of the way
   ' SetWindowState(0)
-
-  ' Try to ensure output directory exists (ignore errors if it already exists)
-  On Error Resume Next
-  MkDir OUTDIR$
-  On Error GoTo 0
 
   ' Initialize state
   RegResetState(ROOT$, "RUNNING")
@@ -97,7 +91,7 @@ Sub Main
   NewCtm("data")
   ClearCtm("data")
 
-  Settings(bandwidth#, satuation#, wavelengthStart%, wavelengthStop%)
+  Settings(bandwidth#, satuation#, wavelengthStart#, wavelengthStop#)
 
   Do
     DoEvents
@@ -126,7 +120,6 @@ Sub Main
       n = n + 1
       RegWrite(HKEY_CURRENT_USER, ROOT$, "State", "FileCounter", CStr(n))
 
-      filename$ = OUTDIR$ + CStr(n) + ".txt"
 
       status$ = ""
 
@@ -138,10 +131,10 @@ Sub Main
           paramBandwidth$ = CStr(RegRead(HKEY_CURRENT_USER, ROOT$, "Param", "Bandwidth"))
 
           If Len(paramWaveStart$) > 0 Then
-            defaultWavelengthStart = CInt(paramWaveStart$)
+            defaultWavelengthStart = CDbl(paramWaveStart$)
           End If
           If Len(paramWaveStop$) > 0 Then
-            defaultWavelengthStop = CInt(paramWaveStop$)
+            defaultWavelengthStop = CDbl(paramWaveStop$)
           End If
           If Len(paramSat$) > 0 Then
             defaultSaturation = CDbl(paramSat$)
@@ -152,19 +145,19 @@ Sub Main
 
           bandwidth# = defaultBandwidth#
           saturation# = defaultSaturation#
-          wavelengthStart% = defaultWavelengthStart%
-          wavelengthStop% = defaultWavelengthStop%
+          wavelengthStart# = defaultWavelengthStart#
+          wavelengthStop# = defaultWavelengthStop#
 
-          Settings(bandwidth#, satuation#, wavelengthStart%, wavelengthStop%)
+          Settings(bandwidth#, satuation#, wavelengthStart#, wavelengthStop#)
           status$ = "IDLE"
 
         Case "RESET"
           bandwidth# = defaultBandwidth#
           saturation# = defaultSaturation#
-          wavelengthStart% = defaultWavelengthStart%
-          wavelengthStop% = defaultWavelengthStop%
+          wavelengthStart# = defaultWavelengthStart#
+          wavelengthStop# = defaultWavelengthStop#
 
-          Settings(bandwidth#, satuation#, wavelengthStart%, wavelengthStop%)
+          Settings(bandwidth#, satuation#, wavelengthStart#, wavelengthStop#)
           status$ = "IDLE"
 
         Case "PING"
@@ -173,7 +166,7 @@ Sub Main
         Case "SCAN"
           filename$ = CStr(RegRead(HKEY_CURRENT_USER, ROOT$, "Param", "Filename"))
           ClearCtm("data")
-          ReturnToStart(Wavelength_XMode, wavelengthStart)
+          ' ReturnToStart(Wavelength_XMode, Cdbl(wavelengthStart))
 
           Collect("data")
 
@@ -183,7 +176,7 @@ Sub Main
           status$ = "DONE"
 
         Case "BLANK"
-          ReturnToStart(Wavelength_XMode, wavelengthStart)
+          ' ReturnToStart(Wavelength_XMode, Cdbl(wavelengthStart))
           DoBaseline
 
           status$ = "DONE"
@@ -195,7 +188,7 @@ Sub Main
 
         Case Else
           lprint("Command failed")
-          status$ = WriteToFile(ROOT$, cmdId$, filename$, cmd$)
+          ' status$ = WriteToFile(ROOT$, cmdId$, filename$, cmd$)
 
       End Select
 

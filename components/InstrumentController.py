@@ -1,17 +1,17 @@
 # This is the Instrument Controller
 
-try:
-    from Sample import Sample
-except ImportError:
-    from components.Sample import Sample
-
+# try:
+#     from Sample import Sample
+# except ImportError:
+#     from components.Sample import Sample
+# from datetime import datetime
 
 import json
 import time
 import uuid
 import winreg
 import subprocess
-from datetime import datetime
+
 from pathlib import Path
 
 print("InstrumentController module loaded")
@@ -28,18 +28,26 @@ class InstrumentController:
     STATE_KEY = ROOT + r"\State"
     ADL_FILE = ".\\components\\MailboxCheck.adl"
     POLL_INTERVAL_S = 0.1
-    TIMEOUT_S = 60.0
+    TIMEOUT_S = 10.0
 
     def __init__(self, debug: bool = False):
-        print(f"[InstrumentController][RECEIVED] __init__ payload={{'debug': {debug}}}")
+        if debug:
+            print(
+                f"[InstrumentController][RECEIVED] __init__ payload={{'debug': {debug}}}"
+            )
+
         self.debug = bool(debug)
         self.blank_file = ""
-        self.sample_wavelength_nm = 260
-        self.scan_start_nm = 600
-        self.scan_stop_nm = 500
-        self.scan_bw = 2
-        self.scan_sat = 0.1
-        print("[InstrumentController][EXECUTED] __init__ result=initialized")
+
+        self.instrumentParams = {
+            "waveStart": 600,
+            "waveStop": 500,
+            "saturation": 0.1,
+            "bandwidth": 2,
+        }
+
+        if debug:
+            print("[InstrumentController][EXECUTED] __init__ result=initialized")
 
     def _debug(self, message: str) -> None:
         if self.debug:
@@ -98,7 +106,7 @@ class InstrumentController:
         cls._reg_set(cls.PARAM_KEY, "Filename", "")
         cls._reg_set(cls.PARAM_KEY, "WavelengthStart", "")
         cls._reg_set(cls.PARAM_KEY, "WavelengthStop", "")
-        cls._reg_set(cls.PARAM_KEY, "Satuation", "")
+        cls._reg_set(cls.PARAM_KEY, "Saturation", "")
         cls._reg_set(cls.PARAM_KEY, "Banwidth", "")
         cls._reg_set(cls.STATE_KEY, "ReplyId", "")
         cls._reg_set(cls.STATE_KEY, "ResultPath", "")
@@ -109,13 +117,13 @@ class InstrumentController:
             cls._reg_set(cls.STATE_KEY, "FileCounter", "0")
 
     @classmethod
-    def _send_command(cls, command: str, params: dict) -> str:
+    def _send_command(cls, command: str, params: dict = {}) -> str:
         cmd_id = str(uuid.uuid4())
         cls._reg_set(cls.PARAM_KEY, "Json", json.dumps(params))
         cls._reg_set(cls.PARAM_KEY, "Filename", str(params.get("filename", "")))
         cls._reg_set(cls.PARAM_KEY, "WavelengthStart", str(params.get("waveStart", "")))
         cls._reg_set(cls.PARAM_KEY, "WavelengthStop", str(params.get("waveStop", "")))
-        cls._reg_set(cls.PARAM_KEY, "Satuation", str(params.get("saturation", "")))
+        cls._reg_set(cls.PARAM_KEY, "Saturation", str(params.get("saturation", "")))
         cls._reg_set(cls.PARAM_KEY, "Banwidth", str(params.get("bandwidth", "")))
         cls._reg_set(cls.QUEUE_KEY, "CommandId", cmd_id)
         cls._reg_set(cls.QUEUE_KEY, "Command", command)
@@ -155,7 +163,7 @@ class InstrumentController:
         return status not in {"", "TIMEOUT", "ERROR", "FAILED", "OFFLINE"}
 
     def _send_and_wait(
-        self, command: str, params: dict, timeout_s: float = None
+        self, command: str, params: dict = {}, timeout_s: float = None
     ) -> dict:
         self._print_received(
             "_send_and_wait",
@@ -178,6 +186,9 @@ class InstrumentController:
 
         return reply
 
+    def _get_result_path(self) -> str:
+        return self._reg_get(self.STATE_KEY, "ResultPath", "")
+
     def setup(self):
         """
         Sets up the instrument
@@ -185,27 +196,14 @@ class InstrumentController:
         self._print_received("setup")
         try:
             self._debug("setup() starting mailbox clear + PING")
-
+            # Clears the windows registry
             self._clear_mailbox(reset_file_counter=False)
+
             # Launches the ADL file that communicates with the instrument
             subprocess.Popen(self.ADL_FILE, shell=True)
 
-            # self._ensure_key(self.QUEUE_KEY)
-            # self._ensure_key(self.PARAMS_KEY)
-            # self._ensure_key(self.STATE_KEY)
-
-            # reply = self._send_and_wait(
-            #     "PING", {"ts": datetime.now().astimezone().isoformat()}, timeout_s=10.0
-            # )
-            # ok = self._is_success(reply)
-
-            params = {
-                "waveStart": self.scan_start_nm,
-                "waveStop": self.scan_stop_nm,
-                "saturation": self.scan_sat,
-                "bandwidth": self.scan_bw,
-            }
-            reply = self._send_and_wait("SETUP", params)
+            params = self.instrumentParams
+            reply = self._send_and_wait("SETUP", params, timeout_s=30.0)
             self._debug(f"setup() -> {reply}")
 
             result = self._is_success(reply)
@@ -224,49 +222,11 @@ class InstrumentController:
         self._print_received("ping")
         self._debug("ping() invoked")
 
-        reply = self._send_and_wait(
-            "PING", {"ts": datetime.now().astimezone().isoformat()}, timeout_s=10.0
-        )
+        reply = self._send_and_wait("PING")
         result = self._is_success(reply)
 
         self._print_executed("ping", result)
         return result
-
-    def changeParams(self, input_params: dict):
-        """
-        Changes the parameters of the instrument
-
-        Args:
-            input_params (dict): a dictionary of parameters to change. Valid keys:
-                TBD - depends on what the instrument takes
-
-        Returns:
-            Boolean: True if successful
-        """
-
-        self._print_received("changeParams", input_params)
-        self._debug(f"changeParams() input={input_params}")
-        params_file = Path(__file__).parent / "storedParams.txt"
-
-        # Load existing params if file exists
-        existing_params = {}
-        if params_file.exists():
-            with open(params_file, "r") as f:
-                for line in f:
-                    key, value = line.strip().split(",", 1)
-                    existing_params[key] = value
-
-        # Update with new params
-        existing_params.update(input_params)
-
-        # Write all params back
-        with open(params_file, "w") as f:
-            for key, value in existing_params.items():
-                f.write(f"{key},{value}\n")
-
-        self._debug(f"changeParams() wrote {len(existing_params)} param entries")
-        self._print_executed("changeParams", True)
-        return True
 
     def take_blank(self, filename):
         """
@@ -283,12 +243,9 @@ class InstrumentController:
 
         out_target = Path(filename)
         out_target.parent.mkdir(parents=True, exist_ok=True)
-        out_base = out_target.with_suffix("")
+        # out_base = out_target.with_suffix("")
 
         params = {
-            "start_nm": self.scan_start_nm,
-            "stop_nm": self.scan_stop_nm,
-            "out_base": str(out_base),
             "filename": filename,
         }
         reply = self._send_and_wait("BLANK", params)
@@ -354,13 +311,11 @@ class InstrumentController:
         self._print_received(
             "take_sample",
             {
-                "sample_wavelength_nm": self.sample_wavelength_nm,
                 "blank_file": self.blank_file or None,
             },
         )
 
         params = {
-            # "wavelength_nm": self.sample_wavelength_nm,
             "filename": filename,
         }
         if self.blank_file:
@@ -375,34 +330,56 @@ class InstrumentController:
 
             return None
 
-        sample_name = datetime.now().strftime("sample_%Y%m%d_%H%M%S")
-        sample = Sample(sample_name, "uv-vis", [], 0.0)
-
-        self._debug(f"take_sample() success sample={sample.name}")
-        print(
-            "[InstrumentController][TX] destination=SystemController/ServerPipeline, "
-            f"command=sample_ready, payload={{'sample_name': '{sample.name}', 'type': '{sample.type}'}}"
-        )
-        self._print_executed("take_sample", sample)
+        sample = self._get_result_path()
 
         return sample
 
     def changeSettings(self, waveStart="", waveStop="", saturation="", bandwidth=""):
-        params = {
-            "waveStart": waveStart,
-            "waveStop": waveStop,
-            "saturation": saturation,
-            "bandwidth": bandwidth,
-        }
-        reply = self._send_and_wait("SETTING", params)
+
+        self.instrumentParams["waveStart"] = (
+            waveStart or self.instrumentParams["waveStart"]
+        )
+        self.instrumentParams["waveStop"] = (
+            waveStop or self.instrumentParams["waveStop"]
+        )
+        self.instrumentParams["saturation"] = (
+            saturation or self.instrumentParams["saturation"]
+        )
+        self.instrumentParams["bandwidth"] = (
+            bandwidth or self.instrumentParams["bandwidth"]
+        )
+
+        reply = self._send_and_wait("SETTING", self.instrumentParams)
 
         return self._is_success(reply)
+
+    def getSettings(self):
+        """
+        Returns a dictionairy containing the 4 parameters of the instrument
+
+        Returns:
+            dict: A dictionary containing the 4 parameters of the instrument
+        """
+
+        return self.instrumentParams
 
     def reset(self):
         params = {}
         reply = self._send_and_wait("RESET", params)
         result = self._is_success(reply)
         return result
+
+    def resetSettings(self):
+        self.instrumentParams = {
+            "waveStart": 600,
+            "waveStop": 500,
+            "saturation": 0.1,
+            "bandwidth": 2,
+        }
+        params = self.instrumentParams
+        reply = self._send_and_wait("SETTING", params)
+
+        return self._is_success(reply)
 
     def shutdown(self):
         """
@@ -421,7 +398,10 @@ class InstrumentController:
 # time.sleep(10)
 # print(testing.take_blank("test_blank.txt"))
 
-# ok = self._is_success(reply)
-# self._debug(f"shutdown() -> {ok}")
-# self._print_executed("shutdown", ok)
-# return ok
+# instrument_controller = InstrumentController()
+
+# print(instrument_controller.setup())
+# print(instrument_controller.ping())
+# instrument_controller.take_sample("test_sample1.txt")
+# instrument_controller.take_sample("test_sample2.txt")
+# instrument_controller.take_sample("test_sample3.txt")

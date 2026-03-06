@@ -173,20 +173,25 @@ class SystemController:
         if self._instrument_ready():
             # sends instructions to machine to run test
             self._print_received("InstrumentController.take_sample")
-            data = self.InstController.take_sample()
-            self._print_executed("InstrumentController.take_sample", data)
-            self._debug(f"runLabMachine() sample received={bool(data)}")
-            if data:
+            targetFilename = datetime.now().strftime("%Y%m%d_%H%M%SZ") + ".csv"
+            csv_path = self.InstController.take_sample(targetFilename)
+            self._print_executed("InstrumentController.take_sample", csv_path)
+            self._debug(f"runLabMachine() sample received={bool(csv_path)}")
+            if csv_path:
+                self.ServController.process_sample(csv_path)
                 # verify server connection
                 if self._server_ready():
                     # sends data to UI somehow and send data to server controller to send to the ICN
-                    self._print_received("ServerController.send_data", data)
-                    sent = self.ServController.send_data(data)
-                    self._print_executed("ServerController.send_data", sent)
-                    self._debug(f"runLabMachine() send_data -> {sent}")
-                    if sent:
-                        self._print_executed("runLabMachine", (0, data))
-                        return 000, data
+                    self._print_received("ServerController.send_all_data")
+                    sent = self.ServController.send_all_data()
+                    self._print_executed("ServerController.send_all_data", sent)
+                    self._debug(f"runLabMachine() send_all_data -> {sent}")
+                    for fileSent in sent:
+                        if fileSent[1] is False:
+                            self._debug(f"runLabMachine() failed to send {fileSent[0]}")
+                        if fileSent[0] == csv_path:
+                            self._print_executed("runLabMachine", (0, csv_path))
+                            return 000, csv_path
                     self._print_executed("runLabMachine", (110, None))
                     return 110, None
                 else:
