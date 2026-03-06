@@ -33,37 +33,42 @@ Sub ShowDialog
 	  aSAT = dlg.SAT
 	  aSBW = dlg.SBW
 	  aWave = dlg.Wavelength
-  	  SetVal("Common Slit Width",aSBW)
+  	SetVal("Common Slit Width",aSBW)
 	  SetVal("Common SAT",aSAT)
 	  SetVal("GoTo Wavelength",aWave)
-      SetVal("Scan Mode",0)
-      SetVal("Scan Start",600)
-      SetVal("Scan Stop",500)
+    SetVal("Scan Mode",0)
+    SetVal("Scan Start",600)
+    SetVal("Scan Stop",500)
 	  SetupInst
-      
-      'Dim srdFile As IO.StreamReader
-      'Dim fileReader As String
-      'filename = "C:\Users\Agilent Cary 60\Documents\SoftwareDev - dont delete\Scans\Scan1.csv"
-      Dim filename As String
-      filename = "C:\Users\Agilent Cary 60\Documents\SoftwareDev - dont delete\Scans\test"
-      'filename = "C:\Users\Agilent Cary 60\Documents\SoftwareDev - dont delete\ScanOptions.txt"
-      PrintTextFile(filename)
-      'lprint(a)
-      Collect("My Data")
-      Dim j As Integer
-      For j = 0 To 11
-        SaveAs(filename & j & ".txt", j)
-      Next
-      
-      'fileReader = My.Computer.FileSystem.ReadAllText(filename)
-      'lprint(fileReader)
+    
+    'Dim srdFile As IO.StreamReader
+    'Dim fileReader As String
+    'filename = "C:\Users\Agilent Cary 60\Documents\SoftwareDev - dont delete\Scans\Scan1.csv"
+    Dim filename As String
+    filename = "C:\Users\Agilent Cary 60\Documents\SoftwareDev - dont delete\Scans\baseline.txt"
+    
+    doBasline
+    SaveAs(filename, 6)
+
+    'filename = "C:\Users\Agilent Cary 60\Documents\SoftwareDev - dont delete\ScanOptions.txt"
+    ' PrintTextFile(filename)
+    'lprint(a)
+    
+    ' Collect("My Data")
+    ' Dim j As Integer
+    ' For j = 0 To 11
+    '   SaveAs(filename & j & ".txt", j)
+    ' Next
+    
+    'fileReader = My.Computer.FileSystem.ReadAllText(filename)
+    'lprint(fileReader)
 	  'CollectAndGraph("My Data", "My Graph", 600, 500, Wavelength_XMode)
-      'Collect("My Data")
-      'a = FConvert("data", 1, "C:\Users\Agilent Cary 60\Documents\SoftwareDev - dont delete\Cary60_Scan.CSV")
+    'Collect("My Data")
+    'a = FConvert("data", 1, "C:\Users\Agilent Cary 60\Documents\SoftwareDev - dont delete\Cary60_Scan.CSV")
 	  'ScanFLC("Hello","World")
-      'a=Read(CSng(aWave))
+    'a=Read(CSng(aWave))
 	  'lprint("Reading: ",GetCtmCollectTime("My Data"))
-      'lprint("Filename: ", GetCtmFileName("My Data"))
+    'lprint("Filename: ", GetCtmFileName("My Data"))
 	End If
   Wend	
 End Sub
