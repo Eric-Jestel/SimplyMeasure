@@ -70,15 +70,27 @@ class InstrumentControllerOpus:
 
         print("Taking Sample...")
         sample_path = self.opus.measure_sample(unload=True, **self.sampleSettings)
+        print(read_opus(sample_path))
         print("Saved sample to:", str(sample_path))
-
+        """"""
         if save_path is not None:
             save_path = Path(save_path)
             save_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.move(sample_path, str(save_path))
             print("Moved sample to:", str(save_path))
 
+        
         return sample_path
+
+    def ping(self):
+        pass
+
+    def setup(self):
+        pass
+
+    def changeParams(self): # it should allow you to change the starting wavelength, stoping wavelength, saturstion, and something else, not sure what.
+        pass
+
 
     # This function checks that the instrument is connected and checks the opus version
     def ping(self) -> bool:
@@ -131,3 +143,8 @@ class InstrumentControllerOpus:
 
     def disconnect(self):
         pass
+my_controller = InstrumentControllerOpus()
+save_path = r"C:\Users\Public\Documents\Bruker\Opus_8.8.4\Data\Sample1.0"
+my_controller.getSample(save_path)
+
+

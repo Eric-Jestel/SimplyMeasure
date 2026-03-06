@@ -22,6 +22,7 @@ class Sample:
             interval (Float): The interval between each data point
         """
         self.name = name
+        self.type = type
         self.data = data
         self.interval = interval
 
@@ -29,4 +30,8 @@ class Sample:
         """
         Generates a string representation of the sample that will be used to create the sample file
         """
-        pass
+        point_count = len(self.data) if self.data is not None else 0
+        return (
+            f"Sample(name={self.name}, type={self.type}, "
+            f"points={point_count}, interval={self.interval})"
+        )
