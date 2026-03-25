@@ -6,64 +6,76 @@ Sub ShowDialog
   End If
   aSBW = 2
   aSAT = 0.1
-  aWave = 500
-  NewCtm("My Data")
+  aWaveS = 600
+  aWaveE = 500
+  j = 10
+  NewCtm("data")
   'NewGraph("My Graph")
   'GraphScales("My Graph",500,-1,600,2)
   'ShowCtm("My Graph", "My Data")
-  ClearCtm("My Data")
+  ClearCtm("data")
     i = -1           ' program exit on cancel
-    While i <> 0 
+	  While i <> 0 
 	Begin Dialog UserDialog 400,203 ' %GRID:10,7,1,1
 		OKButton 20,168,120,21
 		CancelButton 260,168,110,21
-		Text 20,7,90,14,"Wavelength",.LWave
-		TextBox 160,7,110,14,.Wavelength
-		Text 20,42,90,14,"SBW",.LSBW
-		TextBox 160,42,110,14,.SBW
-		Text 20,70,90,14,"SAT",.LSAT
-		TextBox 160,70,110,14,.SAT
+		Text 20,7,90,14,"WavelengthS",.LWaveS
+		TextBox 160,7,110,14,.WavelengthS
+    Text 20,42,90,14,"WavelengthE",.LWaveE
+		TextBox 160,42,110,14,.WavelengthE
+		Text 20,70,90,14,"SBW",.LSBW
+		TextBox 160,70,110,14,.SBW
+		Text 20,100,90,14,"SAT",.LSAT
+		TextBox 160,100,110,14,.SAT
 	End Dialog
 	Dim dlg As UserDialog
-	dlg.Wavelength = aWave
+	dlg.WavelengthS = aWaveS
+  dlg.WavelengthE = aWaveE
 	dlg.SAT = aSat
 	dlg.SBW = aSBW
 	i = Dialog(dlg)
 	If i <> 0 Then
 	  aSAT = dlg.SAT
 	  aSBW = dlg.SBW
-	  aWave = dlg.Wavelength
-  	  SetVal("Common Slit Width",aSBW)
+	  aWaveS = dlg.WavelengthS
+    aWaveE = dlg.WavelengthE
+  	SetVal("Common Slit Width",aSBW)
 	  SetVal("Common SAT",aSAT)
-	  SetVal("GoTo Wavelength",aWave)
-      SetVal("Scan Mode",0)
-      SetVal("Scan Start",600)
-      SetVal("Scan Stop",500)
+	  SetVal("GoTo Wavelength",aWaveS)
+    SetVal("Scan Mode",0)
+    SetVal("Scan Start",aWaveS)
+    SetVal("Scan Stop",aWaveE)
 	  SetupInst
-      
-      'Dim srdFile As IO.StreamReader
-      'Dim fileReader As String
-      'filename = "C:\Users\Agilent Cary 60\Documents\SoftwareDev - dont delete\Scans\Scan1.csv"
-      Dim filename As String
-      filename = "C:\Users\Agilent Cary 60\Documents\SoftwareDev - dont delete\Scans\test"
-      'filename = "C:\Users\Agilent Cary 60\Documents\SoftwareDev - dont delete\ScanOptions.txt"
-      PrintTextFile(filename)
-      'lprint(a)
-      Collect("My Data")
-      Dim j As Integer
-      For j = 0 To 11
-        SaveAs(filename & j & ".txt", j)
-      Next
-      
-      'fileReader = My.Computer.FileSystem.ReadAllText(filename)
-      'lprint(fileReader)
+    
+    'Dim srdFile As IO.StreamReader
+    'Dim fileReader As String
+    'filename = "C:\Users\Agilent Cary 60\Documents\SoftwareDev - dont delete\Scans\Scan1.csv"
+    ' Dim filename As String
+    ' filename = "C:\Users\Agilent Cary 60\Documents\SoftwareDev - dont delete\Scans\baseline.txt"
+    
+    ' doBasline
+    ' SaveAs(filename, 6)
+
+    'filename = "C:\Users\Agilent Cary 60\Documents\SoftwareDev - dont delete\ScanOptions.txt"
+    ' PrintTextFile(filename)
+    'lprint(a)
+    
+    ' Collect("My Data")
+    ' Dim j As Integer
+    ' For j = 0 To 11
+    '   SaveAs(filename & j & ".txt", j)
+    ' Next
+    
+    'fileReader = My.Computer.FileSystem.ReadAllText(filename)
+    'lprint(fileReader)
 	  'CollectAndGraph("My Data", "My Graph", 600, 500, Wavelength_XMode)
-      'Collect("My Data")
-      'a = FConvert("data", 1, "C:\Users\Agilent Cary 60\Documents\SoftwareDev - dont delete\Cary60_Scan.CSV")
+    Collect("data")
+    a = FConvert("data", 1, "C:\Users\Agilent Cary 60\Documents\SoftwareDev - dont delete\scans\Cary60_Scan" & j & ".CSV")
+    j = j + 1
 	  'ScanFLC("Hello","World")
-      'a=Read(CSng(aWave))
+    'a=Read(CSng(aWave))
 	  'lprint("Reading: ",GetCtmCollectTime("My Data"))
-      'lprint("Filename: ", GetCtmFileName("My Data"))
+    'lprint("Filename: ", GetCtmFileName("My Data"))
 	End If
   Wend	
 End Sub

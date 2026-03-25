@@ -18,7 +18,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
-# ── Palette (matches setup_page.py) ──────────────────────────────────────────
+
+# ── Palette ──────────────────────────────────────────
 BG = "#E4E4E4"
 BG_INSET = "#DCDCDC"
 BG_BTN = "#C8C8C8"
@@ -34,29 +35,25 @@ TEXT_BTN = "#3A3A3A"
 class Panel(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setStyleSheet(
-            f"""
+        self.setStyleSheet(f"""
             Panel {{
                 background-color: {BG};
                 border: 1px solid {BORDER};
                 border-radius: 5px;
             }}
-        """
-        )
+            """)
 
 
 class InsetBox(QFrame):
     def __init__(self, text: str = "", parent=None):
         super().__init__(parent)
-        self.setStyleSheet(
-            f"""
+        self.setStyleSheet(f"""
             QFrame {{
                 background-color: {BG_INSET};
                 border: none;
                 border-radius: 3px;
             }}
-        """
-        )
+            """)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 8, 10, 8)
         if text:
@@ -85,8 +82,7 @@ class StyledButton(QPushButton):
         self.setMinimumHeight(height)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFont(QFont("Helvetica Neue", size))
-        self.setStyleSheet(
-            f"""
+        self.setStyleSheet(f"""
             QPushButton {{
                 background-color: {BG_BTN};
                 color: {TEXT_BTN};
@@ -96,8 +92,7 @@ class StyledButton(QPushButton):
             }}
             QPushButton:hover   {{ background-color: {BG_BTN_HOV}; }}
             QPushButton:pressed {{ background-color: {BG_BTN_PRS}; }}
-        """
-        )
+            """)
 
 
 # ── Panel 1 : Login ───────────────────────────────────────────────────────────
@@ -110,7 +105,7 @@ class LoginPanel(Panel):
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(8)
 
-        title = QLabel("Enter Username")
+        title = QLabel("Login")
         title.setFont(QFont("Georgia", 13, QFont.Weight.Bold))
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title.setStyleSheet(
@@ -120,7 +115,7 @@ class LoginPanel(Panel):
         layout.addWidget(h_rule())
         layout.addSpacing(4)
 
-        lbl = QLabel("Username")
+        lbl = QLabel("Enter Username")
         lbl.setFont(QFont("Helvetica Neue", 9, QFont.Weight.Normal, True))  # italic
         lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl.setStyleSheet(
@@ -131,8 +126,7 @@ class LoginPanel(Panel):
         self.username_input = QLineEdit()
         self.username_input.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.username_input.setFont(QFont("Helvetica Neue", 9))
-        self.username_input.setStyleSheet(
-            f"""
+        self.username_input.setStyleSheet(f"""
             QLineEdit {{
                 background-color: {BG_INSET};
                 color: {TEXT_MAIN};
@@ -140,8 +134,7 @@ class LoginPanel(Panel):
                 border-radius: 4px;
                 padding: 5px 10px;
             }}
-        """
-        )
+            """)
         if app:
             self.username_input.setText(app.state.username)
         layout.addWidget(self.username_input)
@@ -206,8 +199,8 @@ class InstructionsPanel(Panel):
 
         steps = [
             ("Step 1: Login", 1),
-            ("Step 2: Capture sample", 2),
-            ("Step N: …", 3),
+            ("Step 2: Load Sample", 2),
+            ("Step 3: Capture Sample", 3),
         ]
 
         for label, step_num in steps:
@@ -232,7 +225,7 @@ class ExplanationPanel(Panel):
         inset = InsetBox()
         inset.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
-        self.expl_label = QLabel("Explanation of step 1, 2…")
+        self.expl_label = QLabel("Log in by entering your ICN username.")
         self.expl_label.setFont(QFont("Helvetica Neue", 10))
         self.expl_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.expl_label.setWordWrap(True)
@@ -244,7 +237,14 @@ class ExplanationPanel(Panel):
         layout.addWidget(inset)
 
     def set_step(self, step: int):
-        self.expl_label.setText(f"Step {step} explanation placeholder.")
+        explanations = {
+            1: "Log in by entering your ICN username.",
+            2: "Place your sample in the instrument. Ensure the sample holder is clean and properly positioned. The smooth side of Cuvette should be facing the camera.",
+            3: "Press Capture to begin the measurement. Do not move the sample until the reading is complete.",
+        }
+
+        text = explanations.get(step, "No explanation available.")
+        self.expl_label.setText(text)
         self.expl_label.setStyleSheet(
             f"color: {TEXT_MAIN}; background: transparent; border: none;"
         )
@@ -260,14 +260,13 @@ class ActionPanel(Panel):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 18, 16, 18)
         layout.setSpacing(12)
-        layout.addStretch()
 
         self.take_btn = StyledButton("Take sample", large=True)
         self.take_btn.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
         self.take_btn.clicked.connect(self._on_take_sample)
-        layout.addWidget(self.take_btn)
+        layout.addWidget(self.take_btn, stretch=1)
 
         self.adv_btn = StyledButton("Advanced options", large=True)
         self.adv_btn.setSizePolicy(
@@ -275,8 +274,6 @@ class ActionPanel(Panel):
         )
         self.adv_btn.clicked.connect(self._on_advanced)
         layout.addWidget(self.adv_btn)
-
-        layout.addStretch()
 
     def _on_take_sample(self):
         if not self.app:
@@ -297,7 +294,10 @@ class ActionPanel(Panel):
         )
 
     def _on_advanced(self):
-        QMessageBox.information(self, "Advanced Options", "Prototype placeholder.")
+        from app.dialogs.advanced_options import AdvancedOptionsDialog
+
+        dialog = AdvancedOptionsDialog(parent=self, app=self.app)
+        dialog.exec()
 
 
 # ── Panel 5 : Data viewer (plot) ──────────────────────────────────────────────
@@ -329,6 +329,11 @@ class DataViewerPanel(Panel):
         self.plot_widget.setLabel("bottom", "Wavelength (nm)", color=TEXT_MAIN)
         self.plot_widget.setLabel("left", "Absorbance (AU)", color=TEXT_MAIN)
         self.plot_widget.setTitle("Sample Data", color=TEXT_MAIN, size="11pt")
+
+        self.plot_widget.setXRange(300, 900, padding=0)
+        self.plot_widget.setYRange(0, 1.1, padding=0)
+        self.plot_widget.setLimits(xMin=300, xMax=900, yMin=0, yMax=1.1)
+        self.plot_widget.setMouseEnabled(x=False, y=False)
 
         axis_pen = pg.mkPen(color=BORDER, width=1)
         for axis in ["bottom", "left", "top", "right"]:

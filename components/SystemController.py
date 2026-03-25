@@ -20,7 +20,7 @@ class SystemController:
 
     # ------------------------------------------------------------------------------------------------------------------------------------------
     def __init__(
-        self,
+        self, PROJECT_ROOT,
         server_controller_cls=ServerController,
         instrument_controller_cls=InstrumentController,
         file_dir=None,
@@ -32,12 +32,13 @@ class SystemController:
             f"instrument_controller_cls={instrument_controller_cls.__name__}, "
             f"file_dir={file_dir}, debug={debug}"
         )
+        self.PROJECT_ROOT = PROJECT_ROOT
         self.debug = bool(debug)
         sample_dir = file_dir or str(Path(__file__).parent / "sample_data")
         self.ServController = server_controller_cls(
-            file_dir=sample_dir, debug=self.debug
+            self.PROJECT_ROOT, file_dir=sample_dir, debug=self.debug
         )
-        self.InstController = instrument_controller_cls(debug=self.debug)
+        self.InstController = instrument_controller_cls(PROJECT_ROOT=self.PROJECT_ROOT, debug=self.debug)
         # needed a dictionary for error codes
         self.ErrorDictionary = {
             0: "Good to go",
@@ -178,9 +179,9 @@ class SystemController:
             self._print_executed("InstrumentController.take_sample", csv_path)
             self._debug(f"runLabMachine() sample received={bool(csv_path)}")
             if csv_path:
-                self.ServController.process_sample(csv_path)
-                # verify server connection
-                if self._server_ready():
+                self.ServController.parse_csv(csv_path)
+                #verify server connection
+                if 1: #self._server_ready():
                     # sends data to UI somehow and send data to server controller to send to the ICN
                     self._print_received("ServerController.send_all_data")
                     sent = self.ServController.send_all_data()
@@ -328,95 +329,3 @@ I need a way to verify machine connectivity (maybe ping it?)
 When running the machine is there really no possible way to send
 information to and from the instrument controller to the machine controller?
 """
-
-
-class SystemControllerSample:
-
-    instCon = InstrumentController()
-    servCon = ServerController()
-    samples = []
-
-    def setup(self):
-        """
-        Sets up the instrument and server controllers
-
-        Returns:
-            Boolean: True if successful
-        """
-        return self.instCon.setup() and self.servCon.connect()
-
-    def take_blank(self, filename):
-        """
-        Takes a blank sample and saves it to a file
-
-        Args:
-            filename (String): The name of the file that the blank sample is saved to
-
-        Returns:
-            Boolean: True if successful
-        """
-        return self.instCon.take_blank(filename)
-
-    def set_blank(self, filename):
-        """
-        Sets the blank that the instrument will compare samples against
-
-        Args:
-            filename (String): the name of the blank file
-
-        Returns:
-            Boolean: True if successful
-        """
-        return self.instCon.set_blank(filename)
-
-    def take_sample(self):
-        """
-        Takes a sample and sends it to ICN
-
-        Returns:
-            Boolean: True if successful
-        """
-        if not self.servCon.is_logged_in():
-            return False
-        newSample = self.instCon.take_sample()
-        self.samples.append(newSample)
-        return self.servCon.send_data(newSample)
-
-    def login_user(self, username):
-        """
-        Logs in a user with the given username
-
-        Args:
-            username (string): the username of the user
-
-        Returns:
-            Boolean: True if successful
-        """
-        return self.servCon.login(username)
-
-    def logout_user(self):
-        """
-        Logs out the user currently logged in
-
-        Returns:
-            Boolean: True if successful
-        """
-        self.samples = []
-        return self.servCon.logout()
-
-    def display_data(self):
-        """
-        Displays all the samples the user has currently taken
-        """
-        return
-
-    def shutdown(self):
-        """
-        Shuts down the instrument and sends all unsent data to ICN
-
-        Returns:
-            Boolean: True if it successfuly sent all unsent data
-        """
-        self.logout_user()
-        self.instCon.shutdown()
-        return self.servCon.send_all_data()

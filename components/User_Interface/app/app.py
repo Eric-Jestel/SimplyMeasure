@@ -20,11 +20,12 @@ except ImportError:
 
 
 class PrototypeApp:
-    def __init__(self):
+    def __init__(self, PROJECT_ROOT):
+        self.PROJECT_ROOT = PROJECT_ROOT
         self.qt_app = QApplication.instance() or QApplication(sys.argv)
 
         self.state = UIState()
-        self.controller = SystemController(debug=self.state.debug_mode)
+        self.controller = SystemController(debug=self.state.debug_mode, PROJECT_ROOT=self.PROJECT_ROOT)
 
         startup_code = self.controller.startUp()
         self.state.instrument_connected = startup_code != 100

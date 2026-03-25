@@ -125,11 +125,15 @@ Sub Main
 
       Select Case cmd
         Case "SETUP"
+          paramFilename$ = CStr(RegRead(HKEY_CURRENT_USER, ROOT$, "Param", "Filename"))
           paramWaveStart$ = CStr(RegRead(HKEY_CURRENT_USER, ROOT$, "Param", "WavelengthStart"))
           paramWaveStop$ = CStr(RegRead(HKEY_CURRENT_USER, ROOT$, "Param", "WavelengthStop"))
           paramSat$ = CStr(RegRead(HKEY_CURRENT_USER, ROOT$, "Param", "Saturation"))
           paramBandwidth$ = CStr(RegRead(HKEY_CURRENT_USER, ROOT$, "Param", "Bandwidth"))
 
+          If Len(paramFilename$) > 0 Then
+            folder = paramFilename$
+          End If
           If Len(paramWaveStart$) > 0 Then
             defaultWavelengthStart = CDbl(paramWaveStart$)
           End If
