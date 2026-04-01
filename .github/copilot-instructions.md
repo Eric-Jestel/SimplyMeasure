@@ -1,117 +1,51 @@
 # AI Coding Agent Instructions for COS-397 Chemistry Instrumentation
 
-## Project Overview
-**COS397_Black_ChemControl** - A chemistry lab instrument control system (Team Jack of All Spades capstone project). This system orchestrates communication between scientific instruments (Bruker IR spectrometer via Cary Bridge), a centralized server (Inter-Chem-Net API), a Tkinter-based UI, and data processing pipelines.
+## Big Picture (current code)
+- Main orchestration lives in `components/SystemController.py`; UI calls this controller directly.
+- UI is **PyQt6**, not Tkinter. Entry is `components/User_Interface/main.py`, app shell is `components/User_Interface/app/app.py` (`QMainWindow` + `QStackedWidget`).
+- Instrument side is registry/mailbox based in `components/InstrumentController.py` (Windows-only `winreg`, ADL launcher).
+- Server side is REST + local file staging in `components/ServerController.py`.
 
-## Architecture
+## Controller Contracts You Must Preserve
+- `SystemController` returns numeric error codes (`0`, `100`, `110`, `220`, `300`, `330`, `400`, `550`) and tuples for data-bearing operations.
+- `InstrumentController.take_sample(filename)` currently returns a **result file path string** (not `Sample`).
+- `InstrumentController.take_blank(filename)` returns `bool`; blank path is kept in `InstrumentController.blank_file`.
+- `ServerController.send_data(samplePath)` expects a staged file path named like `username_datetime_unsent.json`.
 
-### Three-Controller Model
-The system follows a clean three-controller pattern managed by `SystemController`:
+## Logging Convention (project-specific)
+- Controllers now use explicit print tracing:
+   - `[...][RECEIVED]` when a command enters a method
+   - `[...][TX]` when data is sent externally (registry/API)
+   - `[...][EXECUTED]` when method completes with result
+- Keep this pattern when adding/modifying controller methods.
 
-1. **InstrumentController** (`components/InstrumentController.py`)
-   - Communicates with Bruker Cary Bridge via Windows Registry (`HKEY_CURRENT_USER\Software\GenChem\CaryBridge`)
-   - Methods: `setup()`, `take_sample()`, `take_blank()`, `ping()`
-   - Returns `Sample` objects containing spectral data (wavelengths, intervals)
-   - Registry keys: Queue, Params, State; poll interval 0.1s, timeout 60s
+## Data Flow
+- Typical run path in `SystemController.runLabMachine()`:
+   1. `InstrumentController.take_sample(targetFilename)`
+   2. `ServerController.process_sample(csv_path)` (currently referenced by `SystemController`)
+   3. `ServerController.send_all_data()` to upload staged unsent JSON files
+- Blank flow:
+   - `takeBlank(filename)` → `InstrumentController.take_blank(filename)`
+   - `setBlank(path)` → `InstrumentController.set_blank(path)`
 
-2. **ServerController** (`components/ServerController.py`)
-   - REST API client for Inter-Chem-Net (ICN) staging environment
-   - Requires `ICN_PRIVATE_API_KEY` in `.env` file
-   - Methods: `ping()`, `login(username)`, `logout()`, `send_data()`, `send_all_data()`
-   - API base: `https://interchemnet.avibe-stag.com/spectra/api/{endpoint}?key={api_key}`
-   - Returns UUID tokens with expiry tracking
+## UI Wiring (important files)
+- Setup screen: `components/User_Interface/app/views/setup_page.py`
+   - Connect/reconnect instrument/server, blank capture/load/reset, debug mode toggle.
+- Session screen: `components/User_Interface/app/views/instrument_page.py`
+   - Username login (`SystemController.signIn`) and sample capture (`SystemController.runLabMachine`).
+- Shared state: `components/User_Interface/app/state.py` (`username`, `debug_mode`, `instrument_connected`, `server_status`, `blank_file_path`, `sample_files`).
 
-3. **SystemController** (`components/SystemController.py`)
-   - Orchestrates workflow between controllers
-   - Error code dictionary (0=success, 100=machine, 110=server, 220=account, 330=user, 400=no data, 550=no blank)
-   - Workflow: `startUp()` → `signIn(username)` → `runLabMachine()`/`takeBlank()` → `signOut()`
+## Dev Workflows
+- Run UI: `python components/User_Interface/main.py`
+- Tests: `pytest test/`
+- Existing tests are strongest around instrument mailbox helpers (`test/TestInstrument.py`) and sorting utilities (`test/test_basic_sort.py`).
 
-### UI Layer
-- **Framework**: Tkinter with ttk.Style themes ("clam" fallback)
-- **Entry Point**: `components/User_Interface/main.py` → `PrototypeApp`
-- **State Management**: `UIState` dataclass in `state.py` tracks: username, debug_mode, instrument_connected, server_status, blank_file_path, sample_files
-- **Views**: SetupPageView, InstrumentPageView (frame-based routing in `PrototypeApp`)
-- **Widgets**: Custom labeled_value, plot widgets; file dialogs for CSV import
+## Known Gaps / Incomplete Areas (do not assume finished)
+- `SystemController` references `ServerController.process_sample(...)`; ensure this method exists/works before refactors.
+- `SystemController.takeSample()` still calls `take_sample()` without filename (signature mismatch risk).
+- `SystemControllerSample` is legacy/demo code and can diverge from production behavior.
 
-### Data Model
-**Sample class** (`components/Sample.py`):
-- Attributes: name (str), type (str: "infrared"/"uv-vis"), data (float[]), interval (float)
-- Represents single spectral measurement from instrument
-
-## Key Workflows
-
-### Startup Sequence
-```
-SystemController.startUp()
-├─ InstrumentController.setup() → check Cary Bridge registry
-└─ ServerController.connect() → verify ICN API
-Returns: 0 (success) | 100 (machine fail) | 110 (server fail)
-```
-
-### Sample Analysis Workflow
-```
-SystemController.runLabMachine()
-├─ InstrumentController.take_sample() → polls registry, returns Sample
-├─ SystemController.send_data(data) → uploads to ICN
-└─ Returns: (error_code, Sample) tuple
-```
-
-### Development Testing
-- `test/test_basic_sort.py` - Sorting algorithm validation (uses pytest, numpy)
-- `test/TestSystem.py`, `TestServer.py`, `TestInstrument.py`, `TestUI.py` - Component tests
-- Run with: `pytest test/`
-
-## Critical Conventions
-
-### Import Patterns
-- **Flexible imports**: InstrumentController uses try/except for relative vs absolute imports to support both test and installed module contexts
-- Keep `components/Sample.py` importable from both contexts
-
-### Environment Configuration
-- `ServerController` loads `.env` for `ICN_PRIVATE_API_KEY` via `python-dotenv`
-- No hardcoded API URLs or credentials
-
-### Return Values
-- All controller methods return error codes (int) or tuples (code, data)
-- Convention: 0 = success; 100+ = specific error
-- Check `SystemController.ErrorDictionary` when adding new error states
-
-### Registry Interaction (Windows-Only)
-- InstrumentController wraps `winreg` operations (CreateKey, SetValueEx, GetValue)
-- Registry paths use `Software\GenChem\CaryBridge` as ROOT
-- Always poll at 0.1s interval with 60s timeout for instrument operations
-
-## Cross-Component Communication
-
-| From | To | Method | Data |
-|------|-----|--------|------|
-| SystemController | InstrumentController | method calls | - |
-| SystemController | ServerController | method calls | Sample data, user tokens |
-| InstrumentController | SystemController | return Sample | Spectral data |
-| ServerController | ICN API | HTTP GET/POST | JSON with UUID, credentials |
-| UIState | Controllers | (separate binding) | User input, file paths |
-
-## Testing Approach
-- Tests are not integrated with controllers yet (TODO in codebase)
-- Focus on unit tests for individual sorting/utility algorithms
-- Future: mock ServerController API calls, mock registry for InstrumentController
-
-## Dependencies
-- `numpy`, `psutil`, `pytest` (requirements.txt)
-- `requests` (ServerController API)
-- `python-dotenv` (environment config)
-- `tkinter` (standard library, UI)
-- `brukeropus` (Bruker OPUS integration - see BrukerInstCon/)
-
-## Common Tasks for Agents
-
-**Adding a new endpoint**: Update ServerController method + SystemController workflow + error code
-**Adding UI field**: Create widget in views/, update UIState dataclass, bind to controller method
-**Adding instrument feature**: Extend InstrumentController method, create Sample variant, update SystemController logic
-**Testing**: Write test in test/ directory using pytest fixtures, import from components/ with try/except pattern
-
-## Files to Reference When Stuck
-- [SystemController.py](SystemController.py) - system design & error codes
-- [InstrumentController.py](InstrumentController.py) - registry patterns & Sample creation
-- [ServerController.py](ServerController.py) - API integration patterns
-- [app/app.py](components/User_Interface/app/app.py) - view routing & state binding
+## Integration Rules
+- Keep `ICN_PRIVATE_API_KEY` loaded from `.env` in `ServerController`.
+- Do not hardcode secrets or endpoint keys.
+- Keep Windows registry constants and mailbox timing behavior in `InstrumentController` unless explicitly changing protocol.

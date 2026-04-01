@@ -11,6 +11,12 @@ import time
 class InstrumentControllerOpus:
     # need the opus machine to be instantiated
     def __init__(self):
+        # Path to Opus software
+        self.opusExePath = "C:\\Program Files\\Bruker\\OPUS_8.8.4\\opus.exe"  # change to actual path to opus software
+        
+        # start Opus Software
+        self.setup(launch_opus=True)
+
         # needs to connect to opus
         self.opus = Opus()
 
@@ -22,9 +28,7 @@ class InstrumentControllerOpus:
 
         # Settings for measuring samples
         self.sampleSettings = {}
-
-        # Path to Opus software
-        self.opusExePath = r"C:\Program Files\Bruker\OPUS\OPUS.exe"  # change to actual path to opus software
+        
 
     # ------------------------------------------------------------------------------------------------------------------------------------------
     def getBlank(self):
@@ -32,13 +36,12 @@ class InstrumentControllerOpus:
         print("Taking Blank")
         self.opus.measure_ref()
         # TA can set name so fix later
-        self.opus.save_ref(
-            r"C:\Users\Public\Documents\Bruker\Opus_8.8.4\Data\RefBlank.0"
-        )
+        path_ref = self.opus.save_ref()
+        print("Blank taken and saved to:", path_ref)
 
     # TA can change so fix later
     def loadBlank(
-        self, filepath=r"C:\Users\Public\Documents\Bruker\Opus_8.8.4\Data\RefBlank.0"
+        self, filepath= "C:\\Users\\Public\\Documents\\Bruker\\Opus_8.8.4\\Data\\RefBlank.0"
     ):
         # uses the filepath to load the blank.
 
@@ -70,7 +73,7 @@ class InstrumentControllerOpus:
 
         print("Taking Sample...")
         sample_path = self.opus.measure_sample(unload=True, **self.sampleSettings)
-        print(read_opus(sample_path))
+        #print(self.opus.read_opus(sample_path))
         print("Saved sample to:", str(sample_path))
         """"""
         if save_path is not None:
@@ -80,9 +83,6 @@ class InstrumentControllerOpus:
             print("Moved sample to:", str(save_path))
 
         return sample_path
-
-    def ping(self):
-        pass
 
     def setup(self):
         pass
@@ -108,9 +108,10 @@ class InstrumentControllerOpus:
 
     def setup(self, launch_opus=True) -> bool:
         # Launch OPUS (GUI)
+        print("I'm in here!")
         if launch_opus:
             try:
-                subprocess.Popen([self.opus_exe_path])  # starts OPUS Software
+                subprocess.Popen([self.opusExePath])  # starts OPUS Software
                 print("OPUS launched.")
             except Exception as e:
                 print("Failed to launch OPUS:", e)
@@ -143,8 +144,9 @@ class InstrumentControllerOpus:
 
     def disconnect(self):
         pass
-
-
 my_controller = InstrumentControllerOpus()
-save_path = r"C:\Users\Public\Documents\Bruker\Opus_8.8.4\Data\Sample1.0"
+save_path = "C:\\Users\\Public\\Documents\\Bruker\\Opus_8.8.4\\Data\\Sample1.0"
+#my_controller.getBlank()
 my_controller.getSample(save_path)
+
+
