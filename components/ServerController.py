@@ -314,6 +314,11 @@ class ServerController:
             "dataArray": dataArray,
         }
 
+        with open("debug_payload.json", "w") as debug_file:
+            json.dump(json_input, debug_file)
+            print(url_input)
+            print(json_input)
+
         response = requests.post(url_input, json=json_input, timeout=10)
         payload = response.json()
         self._debug(f"TX POST {url_input} payload={json_input}")

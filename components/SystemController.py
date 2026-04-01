@@ -183,8 +183,8 @@ class SystemController:
             self._debug(f"runLabMachine() sample received={bool(csv_path)}")
             if csv_path:
                 self.ServController.parse_csv(csv_path)
-                # verify server connection
-                if self._server_ready():
+                #verify server connection
+                if 1: #self._server_ready():
                     # sends data to UI somehow and send data to server controller to send to the ICN
                     self._print_received("ServerController.send_all_data")
                     sent = self.ServController.send_all_data()
