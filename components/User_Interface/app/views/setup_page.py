@@ -3,6 +3,8 @@ Cary 60 UV-Vis Spectrometer GUI — Setup / Blank Screen
 Chemistry Instrumentation — Jack of all Spades
 """
 
+import os
+
 from PyQt6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -333,12 +335,19 @@ class ActionPanel(Panel):
         )  # Blank is captured from takeBlank() return
         if code == 0:
             self.app.state.blank_file_path = blank_path
-            QMessageBox.information(
-                self, "Capture Blank", f"Blank captured:\n{blank_path}"
-            )
-            self.plot_panel.load_csv(
-                blank_path
-            )  # Plot the csv returned from takeBlank()
+            if blank_path and os.path.exists(blank_path):
+                QMessageBox.information(
+                    self, "Capture Blank", f"Blank captured:\n{blank_path}"
+                )
+                self.plot_panel.load_csv(
+                    blank_path
+                )  # Plot the csv returned from takeBlank()
+            else:
+                QMessageBox.information(
+                    self,
+                    "Capture Blank",
+                    "Blank command completed. No CSV file was returned by the instrument bridge.",
+                )
         else:
             QMessageBox.critical(
                 self,
