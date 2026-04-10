@@ -31,7 +31,7 @@ class InstrumentControllerOpus:
         
 
     # ------------------------------------------------------------------------------------------------------------------------------------------
-    def getBlank(self):
+    def take_blank(self):
         # gets a reference sample aka a blank from the machine, and also sets it as the reference.
         print("Taking Blank")
         self.opus.measure_ref()
@@ -50,7 +50,7 @@ class InstrumentControllerOpus:
         # open function inside opus
         self.opus.open(filepath)
 
-    def setBlank(self, filepath):
+    def set_blank(self, filepath):
         path = Path(filepath)
 
         if not path.exists():
@@ -69,7 +69,7 @@ class InstrumentControllerOpus:
 
         return result_1, result_2
 
-    def getSample(self, save_path=None):
+    def take_sample(self, save_path=None):
 
         print("Taking Sample...")
         sample_path = self.opus.measure_sample(unload=True, **self.sampleSettings)
@@ -83,10 +83,7 @@ class InstrumentControllerOpus:
 
         return sample_path
 
-    def setup(self):
-        pass
-
-    def changeParams(
+    def instrumentParams(
         self,
     ):  # it should allow you to change the starting wavelength, stoping wavelength, saturstion, and something else, not sure what.
         pass
@@ -145,7 +142,7 @@ class InstrumentControllerOpus:
         pass
 my_controller = InstrumentControllerOpus()
 save_path = "C:\\Users\\Public\\Documents\\Bruker\\Opus_8.8.4\\Data\\Sample1.0"
-#my_controller.getBlank()
-my_controller.getSample(save_path)
+#my_controller.take_blank()
+my_controller.take_sample(save_path)
 
 
