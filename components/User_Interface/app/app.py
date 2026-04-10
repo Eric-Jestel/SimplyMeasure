@@ -12,7 +12,7 @@ from app.views.instrument_page import InstrumentPage
 from components.SystemController import SystemController
 
 
-class PrototypeApp:
+class App:
     def __init__(self, PROJECT_ROOT):
         self.PROJECT_ROOT = PROJECT_ROOT
         self.qt_app = QApplication.instance() or QApplication(sys.argv)
