@@ -1,4 +1,4 @@
-from brukeropus import Opus  # , read_opus
+from brukeropus import Opus, OPUSFile  # , read_opus
 from pathlib import Path
 import shutil
 import subprocess
@@ -40,7 +40,7 @@ class InstrumentControllerOpus:
         print("Blank taken and saved to:", path_ref)
 
     # TA can change so fix later
-    def loadBlank(
+    def set_blank(
         self, filepath= "C:\\Users\\Public\\Documents\\Bruker\\Opus_8.8.4\\Data\\RefBlank.0"
     ):
         # uses the filepath to load the blank.
@@ -48,7 +48,7 @@ class InstrumentControllerOpus:
         # I'm not sure this will work since writing .open
         # in this way will just cause python to look for an
         # open function inside opus
-        self.opus.open(filepath)
+        self.opus.open(filepath) # think this is wrong
 
     def set_blank(self, filepath):
         path = Path(filepath)
@@ -72,7 +72,7 @@ class InstrumentControllerOpus:
     def take_sample(self, save_path=None):
 
         print("Taking Sample...")
-        sample_path = self.opus.measure_sample(unload=True, **self.sampleSettings)
+        sample_path = self.opus.measure_sample(unload=True, HFQ=1000, LFQ=2000, NSS=2) #, **self.sampleSettings)
         print("Saved sample to:", str(sample_path))
         """"""
         if save_path is not None:
@@ -140,9 +140,20 @@ class InstrumentControllerOpus:
 
     def disconnect(self):
         pass
-my_controller = InstrumentControllerOpus()
-save_path = "C:\\Users\\Public\\Documents\\Bruker\\Opus_8.8.4\\Data\\Sample1.0"
-#my_controller.take_blank()
-my_controller.take_sample(save_path)
+
+#test = InstrumentControllerOpus()
+#test.take_sample("C:\\Users\\Public\\Documents\\Bruker\\Opus_8.8.4\\Data\\Sample13.0")
+ofile = OPUSFile("C:\\Users\\Public\\Documents\\Bruker\\Opus_8.8.4\\Data\\Sample12.0")
+iter = ofile.iter_data()
+
+for value in iter:
+    print(value)
+    print(value.params)
+
+    # outputData becomes: [[x0, y0], [x1, y1], ...]
+    outputData = [[float(x), float(y)] for x, y in zip(value.x, value.y)]
+
+    print(outputData)
+
 
 
