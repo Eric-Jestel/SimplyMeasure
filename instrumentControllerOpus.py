@@ -1,3 +1,5 @@
+# This is the Opus Instrument Controller
+
 from brukeropus import Opus, OPUSFile  # , read_opus
 from pathlib import Path
 import shutil
@@ -6,6 +8,8 @@ import time
 
 # import os
 
+
+print("InstrumentController module loaded")
 
 # need a class
 class InstrumentControllerOpus:
