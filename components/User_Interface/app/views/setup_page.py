@@ -41,7 +41,8 @@ class StyledButton(QPushButton):
         self.setMinimumHeight(38)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFont(QFont("Helvetica Neue", 9))
-        self.setStyleSheet(f"""
+        self.setStyleSheet(
+            f"""
             QPushButton {{
                 background-color: {BG_BTN};
                 color: {TEXT_BTN};
@@ -51,33 +52,38 @@ class StyledButton(QPushButton):
             }}
             QPushButton:hover   {{ background-color: {BG_BTN_HOV}; }}
             QPushButton:pressed {{ background-color: {BG_BTN_PRS}; }}
-            """)
+            """
+        )
 
 
 # ── Panel ─────────────────────────────────────────────────────────────────────
 class Panel(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setStyleSheet(f"""
+        self.setStyleSheet(
+            f"""
             Panel {{
                 background-color: {BG};
                 border: 1px solid {BORDER};
                 border-radius: 5px;
             }}
-            """)
+            """
+        )
 
 
 # ── Inset box ─────────────────────────────────────────────────────────────────
 class InsetBox(QFrame):
     def __init__(self, text: str = "", parent=None):
         super().__init__(parent)
-        self.setStyleSheet(f"""
+        self.setStyleSheet(
+            f"""
             QFrame {{
                 background-color: {BG_INSET};
                 border: none;
                 border-radius: 3px;
             }}
-            """)
+            """
+        )
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 8, 10, 8)
         if text:
@@ -171,7 +177,8 @@ class ConnectionSubPanel(QWidget):
                 ]
             )
             self.instrument_combo.setFont(QFont("Helvetica Neue", 9))
-            self.instrument_combo.setStyleSheet(f"""
+            self.instrument_combo.setStyleSheet(
+                f"""
                 QComboBox {{
                     background-color: {BG_INSET};
                     color: {TEXT_MAIN};
@@ -188,7 +195,8 @@ class ConnectionSubPanel(QWidget):
                     selection-color: {TEXT_BTN};
                     border: 1px solid {BORDER};
                 }}
-                """)
+                """
+            )
 
             layout.addWidget(type_label)
             layout.addWidget(self.instrument_combo)

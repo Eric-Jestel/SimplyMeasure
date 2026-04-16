@@ -2,9 +2,11 @@ from brukeropus import Opus, OPUSFile  # , read_opus
 from pathlib import Path
 import shutil
 import subprocess
-import time
+
 
 # import os
+# import read_opus when using it
+# import time when using it
 
 
 # need a class
@@ -47,8 +49,11 @@ class InstrumentControllerOpus:
 
         # I'm not sure this will work since writing .open
         # in this way will just cause python to look for an
+
+        # I'm not sure this will work since writing .open
+        # in this way will just cause python to look for an
         # open function inside opus
-        self.opus.open(filepath) # think this is wrong
+        self.opus.open(filepath)
 
     def set_blank(self, filepath):
         path = Path(filepath)
@@ -130,10 +135,10 @@ class InstrumentControllerOpus:
     def changeSettings(
         self, waveStart=None, waveStop=None
     ):  # waveStart is the High end
-        if waveStart != None:
+        if waveStart is not None:
             self.sampleSettings["hfw"] = waveStart
 
-        if waveStop != None:
+        if waveStop is not None:
             self.sampleSettings["lfw"] = waveStop
 
         return self.sampleSettings
