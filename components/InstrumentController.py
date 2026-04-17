@@ -5,8 +5,8 @@
 # except ImportError:
 #     from components.Sample import Sample
 # from datetime import datetime
+# import json
 
-import json
 import time
 import uuid
 import winreg
@@ -21,12 +21,13 @@ class InstrumentController:
     """
     Communicates with the instrument
     """
-
+    # constants for Windows Registries
     ROOT = r"Software\GenChem\CaryBridge"
     QUEUE_KEY = ROOT + r"\Queue"
     PARAM_KEY = ROOT + r"\Param"
     STATE_KEY = ROOT + r"\State"
 
+    # constants for sub-regirstries
     REG_Q_COMMAND = "Command"
     REG_Q_COMMAND_ID = "CommandId"
     REG_P_FILENAME = "Filename"
@@ -46,6 +47,12 @@ class InstrumentController:
     )
     POLL_INTERVAL_S = 0.1
     TIMEOUT_S = 10.0
+    TIMEOUT_MULTIPLIER = 1.1
+
+    WAVE_MIN = 190
+    WAVE_MAX = 1100
+    SAT_MIN = 0.0125
+    SAT_MAX = 1000
 
     def __init__(self, PROJECT_ROOT, debug: bool = False):
         self.PROJECT_ROOT = PROJECT_ROOT
@@ -56,6 +63,7 @@ class InstrumentController:
 
         self.debug = bool(debug)
         self.blank_file = ""
+        self.blank_data = []
 
         self.instrumentParams = {
             self.REG_P_FILENAME: self.SCAN_FOLDER,
@@ -251,6 +259,33 @@ class InstrumentController:
 
         return ""
 
+    def _read_blank(self, filename):
+        return
+
+    def _compare_to_blank(self, filename):
+        return
+
+    def getScanTime(self):
+        """
+        Estimates the time it will take to complete a scan in seconds
+
+        Returns:
+            float: estimated time it will take to complete a scan in seconds
+        """
+        range = abs(self.instrumentParams[self.REG_P_WAVE_START] - self.instrumentParams[self.REG_P_WAVE_STOP])
+        estimate = range * self.instrumentParams[self.REG_P_SATURATION]
+        return estimate
+
+    def getBlankTime(self):
+        """
+        Estimates the time it will take to complete a blank scan in seconds
+
+        Returns:
+            float: estimated time it will take to complete a blank scan in seconds
+        """
+        estimate = (self.WAVE_MAX - self.WAVE_MIN) * self.instrumentParams[self.REG_P_SATURATION]
+        return estimate
+
     def setup(self):
         """
         Sets up the instrument
@@ -303,50 +338,21 @@ class InstrumentController:
         self._print_received("take_blank", {"filename": filename})
         self._debug(f"take_blank() requested filename={filename}")
 
-        started_at = time.time()
         out_target = Path(filename)
         out_target.parent.mkdir(parents=True, exist_ok=True)
-        # out_base = out_target.with_suffix("")
 
-        params = {
-            self.REG_P_FILENAME: filename,
-        }
-        reply = self._send_and_wait("BLANK", params)
-        if self._is_success(reply):
-            print("Blank scan successful, result path:", reply.get("result_path"))
+        params = {self.REG_P_FILENAME: filename}
+        reply = self._send_and_wait("BLANK", params, timeout_s=self.getBlankTime()*self.TIMEOUT_MULTIPLIER)
 
-            resolved_blank = self._resolve_existing_output_path(
-                out_target, str(reply.get("result_path", "")).strip(), started_at
-            )
-            if not resolved_blank:
-                self._debug(
-                    "take_blank() bridge reported success but no CSV file was found"
-                )
-                self.blank_file = ""
-                self._print_executed(
-                    "take_blank",
-                    {
-                        "success": True,
-                        "warning": "No CSV output found",
-                        "requested": str(out_target),
-                        "reply": reply,
-                    },
-                )
-                return True
-
-            self.blank_file = resolved_blank
-
-            self._debug(f"take_blank() success blank_file={self.blank_file}")
-            self._print_executed(
-                "take_blank", {"success": True, "blank_file": self.blank_file}
-            )
-
-            return True
-        else:
+        if not self._is_success(reply):
             self._debug(f"take_blank() failed reply={reply}")
             self._print_executed("take_blank", {"success": False, "reply": reply})
 
             return False
+
+        blank = self._get_result_path()
+
+        return blank
 
     def set_blank(self, filename):
         """
@@ -390,22 +396,14 @@ class InstrumentController:
         Returns:
             Sample: the sample that the instrument collected
         """
-        self._print_received(
-            "take_sample",
-            {
-                "blank_file": self.blank_file or None,
-            },
-        )
+        self._print_received("take_sample", {"blank_file": self.blank_file or None})
 
-        params = {
-            "filename": filename,
-        }
-        if self.blank_file:
-            params["blank_file"] = self.blank_file
+        params = {"filename": filename}
 
         self._debug(f"take_sample() params={params}")
 
         reply = self._send_and_wait("SCAN", params)
+
         if not self._is_success(reply):
             self._debug(f"take_sample() failed reply={reply}")
             self._print_executed("take_sample", None)

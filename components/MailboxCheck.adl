@@ -40,30 +40,11 @@ Function Ping$
   End If
 End Function
 
-' Function WriteToFile$(filename$, data$)
-'   ' Write command to file (uppercase)
-'   On Error GoTo WriteFail
-
-'   f = 1
-'   Open filename$ For Output As #f
-'   Print #f, UCase(data$)
-'   Close #f
-
-'   ' Acknowledge to Python
-'   RegWrite(HKEY_CURRENT_USER, ROOT$, "State", "ResultPath", filename$)
-'   WriteToFile = "DONE"
-
-'   Exit Function 
-
-'   WriteFail:
-'     ' Best-effort error reporting
-'     On Error Resume Next
-'     Close #1
-'     RegWrite(HKEY_CURRENT_USER, ROOT$, "State", "Error", "Failed to write: " + filename$)
-'     WriteToFile = "ERROR"
-'     On Error GoTo 0
-' End Function
-
+Function Scan(ctmName$, filename$)
+  ClearCtm(ctmName$)
+  Collect(ctmName$)
+  FConvert(ctmName$, 1, filename) ' 1 coresponds to a csv file
+End Function
 
 Sub Main
 
@@ -88,8 +69,10 @@ Sub Main
   ' Initialize state
   RegResetState(ROOT$, "RUNNING")
 
-  NewCtm("data")
-  ClearCtm("data")
+  ctmBase$ = "UV_Vis"
+  ctmName$ = ctmBase
+  NewCtm(ctmName$)
+  ClearCtm(ctmName$)
 
   Settings(bandwidth#, satuation#, wavelengthStart#, wavelengthStop#)
 
@@ -152,6 +135,10 @@ Sub Main
           wavelengthStart# = defaultWavelengthStart#
           wavelengthStop# = defaultWavelengthStop#
 
+          NewCtm$ = ctmBase & "-" & wavelengthStart & "-" & wavelengthStop & "-" & satuation
+          ChangeCtmName(ctmName$, NewCtm$)
+          ctmName$ = NewCtm$
+
           Settings(bandwidth#, satuation#, wavelengthStart#, wavelengthStop#)
           status$ = "IDLE"
 
@@ -169,20 +156,26 @@ Sub Main
 
         Case "SCAN"
           filename$ = CStr(RegRead(HKEY_CURRENT_USER, ROOT$, "Param", "Filename"))
-          ClearCtm("data")
-          ' ReturnToStart(Wavelength_XMode, Cdbl(wavelengthStart))
 
-          Collect("data")
-
-          FConvert("data", 1, folder & filename) ' 1 coresponds to a csv file
+          Scan(ctmName$, folder & filename)
 
           RegWrite(HKEY_CURRENT_USER, ROOT$, "State", "ResultPath", folder & filename)
           status$ = "DONE"
 
         Case "BLANK"
-          ' ReturnToStart(Wavelength_XMode, Cdbl(wavelengthStart))
-          DoBaseline
+          filename$ = CStr(RegRead(HKEY_CURRENT_USER, ROOT$, "Param", "Filename"))
+          
+          'sets wavelength to the maximum so a blank will always scan the entire spectrum
+          Settings(bandwidth#, satuation#, 1100, 190) 
+          ctmBlank$ = ctmBase & "_Blank-1100-190-" & satuation
+          ChangeCtmName(ctmName, ctmBlank)
 
+          Scan(ctmBlank$, folder & filename)
+
+          Settings(bandwidth#, satuation#, wavelengthStart#, wavelengthStop#) 'resets settings
+          ChangeCtmName(ctmBlank, ctmName)
+
+          RegWrite(HKEY_CURRENT_USER, ROOT$, "State", "ResultPath", folder & filename)
           status$ = "DONE"
 
         Case "SHUTDOWN"
