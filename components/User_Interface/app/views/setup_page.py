@@ -99,7 +99,7 @@ def h_rule():
     return f
 
 
-# ── Panel 1 : Branding ────────────────────────────────────────────────────────
+# ── Panel 1 : Title Widget ────────────────────────────────────────────────────────
 class BrandingPanel(Panel):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -312,8 +312,7 @@ class ActionPanel(Panel):
             ("Load Blank from File", self._on_load_blank),
             ("Reset Blank", self._on_reset_blank),
             ("Save Blank to File", self._on_save_blank),
-            ("Continue to main session", self._on_continue),
-            ("Debugging mode", self._on_toggle_debug),
+            ("Continue to main session", self._on_continue)
         ]
 
         layout.addStretch()
