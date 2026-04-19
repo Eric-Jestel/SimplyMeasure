@@ -306,9 +306,17 @@ class ActionPanel(Panel):
     def _on_take_sample(self):
         if not self.app:
             return
-        code, csv_path = (
-            self.app.controller.runLabMachine()
-        )  # CSV path is accetped as a return from runLabMachine()
+        from app.dialogs.captureDialog import CaptureDialog
+        from PyQt6.QtWidgets import QApplication
+
+        dialog = CaptureDialog(parent=self)
+        dialog.show()
+        QApplication.processEvents()
+
+        code, csv_path = self.app.controller.runLabMachine()
+
+        dialog.done(0)
+
         if code == 0 and csv_path:
             sample_name = Path(csv_path).name
             self.app.state.sample_files.append(csv_path)
