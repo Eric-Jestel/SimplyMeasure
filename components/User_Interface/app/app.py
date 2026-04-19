@@ -7,8 +7,8 @@ from PyQt6.QtCore import QSize
 
 from app.config import APP_TITLE, WINDOW_MIN_SIZE
 from app.state import UIState
-from app.views.setup_page import SetupPage
-from app.views.instrument_page import InstrumentPage
+from app.views.setupPage import SetupPage
+from app.views.instrumentPage import InstrumentPage
 from components.SystemController import SystemController
 
 

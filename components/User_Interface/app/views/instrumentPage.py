@@ -299,7 +299,7 @@ class ActionPanel(Panel):
         )
 
     def _on_advanced(self):
-        from app.dialogs.advanced_options import AdvancedOptionsDialog
+        from app.dialogs.advancedOptions import AdvancedOptionsDialog
 
         dialog = AdvancedOptionsDialog(parent=self, app=self.app)
         dialog.exec()
