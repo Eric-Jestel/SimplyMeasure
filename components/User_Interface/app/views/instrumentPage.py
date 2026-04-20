@@ -132,6 +132,7 @@ class BrandingPanel(Panel):
 # ── Panel 2 : Login ───────────────────────────────────────────────────────────
 class LoginPanel(Panel):
     login_changed = pyqtSignal(bool)
+    session_reset = pyqtSignal()
 
     def __init__(self, app=None, parent=None):
         super().__init__(parent)
@@ -177,17 +178,44 @@ class LoginPanel(Panel):
 
         layout.addSpacing(4)
 
-        btn_row = QHBoxLayout()
-        btn_row.setSpacing(10)
         self.login_btn = StyledButton("Login")
+        self.login_btn.setStyleSheet("""
+            QPushButton          { background-color: #4CAF50; color: #FFFFFF;
+                                   border: none; border-radius: 4px; padding: 5px 16px; }
+            QPushButton:hover    { background-color: #43A047; }
+            QPushButton:pressed  { background-color: #388E3C; }
+            QPushButton:disabled { background-color: #E8E8E8; color: #A0A0A0; }
+        """)
         self.login_btn.clicked.connect(self._on_login)
+        layout.addWidget(self.login_btn)
+
         self.reset_btn = StyledButton("Reset")
+        self.reset_btn.setStyleSheet("""
+            QPushButton          { background-color: #E53935; color: #FFFFFF;
+                                   border: none; border-radius: 4px; padding: 5px 16px; }
+            QPushButton:hover    { background-color: #C62828; }
+            QPushButton:pressed  { background-color: #B71C1C; }
+            QPushButton:disabled { background-color: #E8E8E8; color: #A0A0A0; }
+        """)
         self.reset_btn.clicked.connect(self._on_reset)
-        btn_row.addWidget(self.login_btn)
-        btn_row.addWidget(self.reset_btn)
-        layout.addLayout(btn_row)
+        self.reset_btn.setVisible(False)
+        layout.addWidget(self.reset_btn)
 
         layout.addStretch()
+
+        # Restore button state if already logged in
+        if app and app.state.username:
+            self._show_reset_state()
+
+    def _show_login_state(self):
+        self.login_btn.setVisible(True)
+        self.reset_btn.setVisible(False)
+        self.username_input.setReadOnly(False)
+
+    def _show_reset_state(self):
+        self.login_btn.setVisible(False)
+        self.reset_btn.setVisible(True)
+        self.username_input.setReadOnly(True)
 
     def _on_login(self):
         if not self.app:
@@ -196,23 +224,24 @@ class LoginPanel(Panel):
         if not username:
             QMessageBox.warning(self, "Login", "Please enter a username.")
             return
-        self.app.state.username = username
         code = self.app.controller.signIn(username)
         if code == 0:
-            QMessageBox.information(self, "Login", f"Logged in as {username}")
+            self.app.state.username = username
+            self._show_reset_state()
             self.login_changed.emit(True)
+            QMessageBox.information(self, "Login", f"Logged in as {username}.")
         else:
-            QMessageBox.critical(
-                self,
-                "Login",
-                self.app.controller.ErrorDictionary.get(code, f"Error code: {code}"),
-            )
+            error = self.app.controller.ErrorDictionary.get(code, f"Error code: {code}")
+            QMessageBox.critical(self, "Login Failed", f"Could not verify username.\n\n{error}")
 
     def _on_reset(self):
         self.username_input.clear()
         if self.app:
             self.app.state.username = ""
+            self.app.state.sample_files.clear()
+        self._show_login_state()
         self.login_changed.emit(False)
+        self.session_reset.emit()
 
 
 # ── Panel 2 : Instructions ────────────────────────────────────────────────────
@@ -352,7 +381,7 @@ class ActionPanel(Panel):
         dialog.exec()
 
 
-# ── Panel 5 : Data viewer (plot) ──────────────────────────────────────────────
+# ── Panel 5 : Data viewer ──────────────────────────────────────────────
 class DataViewerPanel(SamplePlot):
     """
     Thin subclass of SamplePlot that wraps it in the same Panel styling
@@ -383,6 +412,7 @@ class InstrumentPage(QWidget):
         login = LoginPanel(app=self.app)
         actions = ActionPanel(app=self.app, main_window=self.main_window)
         login.login_changed.connect(actions.set_take_enabled)
+        login.session_reset.connect(self._on_session_reset)
 
         left.addWidget(branding)
         left.addWidget(login)
@@ -405,6 +435,9 @@ class InstrumentPage(QWidget):
         right.addWidget(self.data_viewer, stretch=3)
 
         root.addLayout(right, stretch=1)
+
+    def _on_session_reset(self):
+        self.data_viewer.clear_samples()
 
     def showEvent(self, event):
         """

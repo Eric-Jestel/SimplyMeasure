@@ -202,7 +202,7 @@ class SamplePlot(SpectrumPlotWidget):
     """
     Used on the Instrument page.
 
-    Public API
+    Private API
     ----------
     load_blank(filepath)          — load reference curve from CSV
     add_sample(name, x, y)        — add a named sample curve from data lists
@@ -212,7 +212,6 @@ class SamplePlot(SpectrumPlotWidget):
 
     def __init__(self, parent=None):
         super().__init__(
-            title="Sample Data",
             placeholder="No samples taken yet — use 'Take sample' to begin",
             parent=parent,
         )
