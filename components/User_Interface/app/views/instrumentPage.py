@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QMessageBox,
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont
 
 # ── Palette ──────────────────────────────────────────
@@ -90,8 +90,9 @@ class StyledButton(QPushButton):
                 border-radius: 4px;
                 padding: 5px 16px;
             }}
-            QPushButton:hover   {{ background-color: {BG_BTN_HOV}; }}
-            QPushButton:pressed {{ background-color: {BG_BTN_PRS}; }}
+            QPushButton:hover    {{ background-color: {BG_BTN_HOV}; }}
+            QPushButton:pressed  {{ background-color: {BG_BTN_PRS}; }}
+            QPushButton:disabled {{ background-color: #E8E8E8; color: #A0A0A0; }}
             """)
 
 
@@ -130,6 +131,8 @@ class BrandingPanel(Panel):
 
 # ── Panel 2 : Login ───────────────────────────────────────────────────────────
 class LoginPanel(Panel):
+    login_changed = pyqtSignal(bool)
+
     def __init__(self, app=None, parent=None):
         super().__init__(parent)
         self.app = app
@@ -197,6 +200,7 @@ class LoginPanel(Panel):
         code = self.app.controller.signIn(username)
         if code == 0:
             QMessageBox.information(self, "Login", f"Logged in as {username}")
+            self.login_changed.emit(True)
         else:
             QMessageBox.critical(
                 self,
@@ -208,6 +212,7 @@ class LoginPanel(Panel):
         self.username_input.clear()
         if self.app:
             self.app.state.username = ""
+        self.login_changed.emit(False)
 
 
 # ── Panel 2 : Instructions ────────────────────────────────────────────────────
@@ -294,6 +299,7 @@ class ActionPanel(Panel):
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
         self.take_btn.clicked.connect(self._on_take_sample)
+        self.take_btn.setEnabled(bool(app and app.state.username))
         layout.addWidget(self.take_btn, stretch=1)
 
         self.adv_btn = StyledButton("Advanced options", large=True)
@@ -334,6 +340,9 @@ class ActionPanel(Panel):
             self.app.controller.ErrorDictionary.get(code, f"Error code: {code}"),
         )
 
+    def set_take_enabled(self, enabled: bool):
+        self.take_btn.setEnabled(enabled)
+
     def _on_advanced(self):
         from app.dialogs.advancedOptions import AdvancedOptionsDialog
 
@@ -371,6 +380,7 @@ class InstrumentPage(QWidget):
         branding = BrandingPanel()
         login = LoginPanel(app=self.app)
         actions = ActionPanel(app=self.app, main_window=self.main_window)
+        login.login_changed.connect(actions.set_take_enabled)
 
         left.addWidget(branding)
         left.addWidget(login)
