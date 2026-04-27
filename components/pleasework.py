@@ -72,7 +72,7 @@ class InstrumentControllerOpus:
     def take_sample(self, save_path=None):
 
         print("Taking Sample...")
-        sample_path = self.opus.measure_sample(unload=True, HFQ=1000, LFQ=2000, NSS=2) #, **self.sampleSettings)
+        sample_path = self.opus.measure_sample(unload=True, HFQ=1999, LFQ=2000, NSS=9999999999) #, **self.sampleSettings)
         print("Saved sample to:", str(sample_path))
         """"""
         if save_path is not None:
@@ -141,19 +141,20 @@ class InstrumentControllerOpus:
     def disconnect(self):
         pass
 
-#test = InstrumentControllerOpus()
-#test.take_sample("C:\\Users\\Public\\Documents\\Bruker\\Opus_8.8.4\\Data\\Sample13.0")
-ofile = OPUSFile("C:\\Users\\Public\\Documents\\Bruker\\Opus_8.8.4\\Data\\Sample12.0")
-iter = ofile.iter_data()
+test = InstrumentControllerOpus()
+test.take_sample("C:\\Users\\Public\\Documents\\Bruker\\Opus_8.8.4\\Data\\Sample25.0")
 
-for value in iter:
-    print(value)
-    print(value.params)
+# ofile = OPUSFile("C:\\Users\\Public\\Documents\\Bruker\\Opus_8.8.4\\Data\\Sample12.0")
+# iter = ofile.iter_data()
 
-    # outputData becomes: [[x0, y0], [x1, y1], ...]
-    outputData = [[float(x), float(y)] for x, y in zip(value.x, value.y)]
+# for value in iter:
+#     print(value)
+#     print(value.params)
 
-    print(outputData)
+#     # outputData becomes: [[x0, y0], [x1, y1], ...]
+#     outputData = [[float(x), float(y)] for x, y in zip(value.x, value.y)]
+
+#     print(outputData)
 
 
 
