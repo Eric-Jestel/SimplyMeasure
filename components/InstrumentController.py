@@ -459,7 +459,7 @@ class InstrumentController:
         out_target = Path(filename)
         out_target.parent.mkdir(parents=True, exist_ok=True)
 
-        params = {self.REG_P_FILENAME: filename}
+        params = {self.REG_P_FILENAME: Path(filename).name}
         reply = self._send_and_wait("BLANK", params,
                                     timeout_s=self.getBlankTime() * self.TIMEOUT_MULTIPLIER + self.TIMEOUT_CONTANT)
 
