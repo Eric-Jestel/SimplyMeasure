@@ -51,6 +51,13 @@ class AdvancedOptionsDialog(QDialog):
         )
         root.addWidget(title)
 
+        subtitle = QLabel("FOR TA USE ONLY")
+        subtitle.setFont(QFont("Helvetica Neue", 9))
+        subtitle.setStyleSheet(
+            "color: #CC0000; background: transparent; border: none;"
+        )
+        root.addWidget(subtitle)
+
         # Blank options group
         blank_group = QGroupBox("Blank options")
         blank_group.setFont(QFont("Helvetica Neue", 9))
@@ -84,6 +91,11 @@ class AdvancedOptionsDialog(QDialog):
         root.addWidget(blank_group)
 
         # Back button
-        back_btn = StyledButton("Back to instrument page")
-        back_btn.clicked.connect(self.accept)
+        back_btn = StyledButton("Go back to setup page")
+        back_btn.clicked.connect(self._go_to_setup)
         root.addWidget(back_btn)
+
+    def _go_to_setup(self):
+        self.accept()
+        if self.app:
+            self.app.go_to_setup_page()

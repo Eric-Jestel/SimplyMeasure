@@ -122,7 +122,7 @@ class BrandingPanel(Panel):
         ]:
             lbl = QLabel(text)
             lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            lbl.setFont(QFont("Helvetica Neue", 9))
+            lbl.setFont(QFont("Helvetica Neue", 8))
             lbl.setStyleSheet(
                 f"color: {TEXT_MUTED}; background: transparent; border: none;"
             )
@@ -191,17 +191,15 @@ class LoginPanel(Panel):
 
         self.reset_btn = StyledButton("Reset")
         self.reset_btn.setStyleSheet("""
-            QPushButton          { background-color: #E53935; color: #FFFFFF;
+            QPushButton          { background-color: #F9A825; color: #FFFFFF;
                                    border: none; border-radius: 4px; padding: 5px 16px; }
-            QPushButton:hover    { background-color: #C62828; }
-            QPushButton:pressed  { background-color: #B71C1C; }
+            QPushButton:hover    { background-color: #F57F17; }
+            QPushButton:pressed  { background-color: #E65100; }
             QPushButton:disabled { background-color: #E8E8E8; color: #A0A0A0; }
         """)
         self.reset_btn.clicked.connect(self._on_reset)
         self.reset_btn.setVisible(False)
         layout.addWidget(self.reset_btn)
-
-        layout.addStretch()
 
         # Restore button state if already logged in
         if app and app.state.username:
@@ -324,6 +322,13 @@ class ActionPanel(Panel):
         layout.setSpacing(12)
 
         self.take_btn = StyledButton("Take sample", large=True)
+        self.take_btn.setStyleSheet("""
+            QPushButton          { background-color: #4CAF50; color: #FFFFFF;
+                                   border: none; border-radius: 4px; padding: 5px 16px; }
+            QPushButton:hover    { background-color: #43A047; }
+            QPushButton:pressed  { background-color: #388E3C; }
+            QPushButton:disabled { background-color: #E8E8E8; color: #A0A0A0; }
+        """)
         self.take_btn.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
@@ -414,12 +419,12 @@ class InstrumentPage(QWidget):
         login.login_changed.connect(actions.set_take_enabled)
         login.session_reset.connect(self._on_session_reset)
 
-        left.addWidget(branding)
+        left.addWidget(branding, stretch=1)
         left.addWidget(login)
-        left.addWidget(actions)
+        left.addWidget(actions, stretch=4)
 
         left_container = QWidget()
-        left_container.setFixedWidth(260)
+        left_container.setFixedWidth(270)
         left_container.setLayout(left)
         root.addWidget(left_container)
 

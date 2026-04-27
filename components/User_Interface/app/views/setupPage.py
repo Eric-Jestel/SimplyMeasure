@@ -124,7 +124,7 @@ class BrandingPanel(Panel):
         ]:
             lbl = QLabel(text)
             lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            lbl.setFont(QFont("Helvetica Neue", 9))
+            lbl.setFont(QFont("Helvetica Neue", 8))
             lbl.setStyleSheet(
                 f"color: {TEXT_MUTED}; background: transparent; border: none;"
             )
@@ -264,7 +264,7 @@ class ActionPanel(Panel):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 18, 16, 18)
-        layout.setSpacing(0)
+        layout.setSpacing(8)
 
         button_defs = [
             ("Capture Blank", self._on_capture_blank),
@@ -274,15 +274,12 @@ class ActionPanel(Panel):
             ("Continue to main session", self._on_continue)
         ]
 
-        layout.addStretch()
         for text, handler in button_defs:
             btn = StyledButton(text)
-            btn.setFixedHeight(34)
-            btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
             if handler:
                 btn.clicked.connect(handler)
             layout.addWidget(btn)
-            layout.addStretch()
 
     def _on_capture_blank(self):
         if not self.app:
@@ -414,7 +411,7 @@ class SetupPage(QWidget):
         top = QHBoxLayout()
         top.setSpacing(8)
         branding = BrandingPanel()
-        branding.setFixedWidth(260)
+        branding.setFixedWidth(270)
         self.status_panel = StatusPanel(app=self.app)
         top.addWidget(branding)
         top.addWidget(self.status_panel)
@@ -426,7 +423,7 @@ class SetupPage(QWidget):
         actions = ActionPanel(
             plot_panel=plot, app=self.app, main_window=self.main_window
         )
-        actions.setFixedWidth(260)
+        actions.setFixedWidth(270)
         bottom.addWidget(actions)
         bottom.addWidget(plot)
 
