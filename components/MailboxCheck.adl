@@ -69,7 +69,7 @@ Sub Main
   ' Initialize state
   RegResetState(ROOT$, "RUNNING")
 
-  ctmBase$ = "UV_Vis"
+  ctmBase$ = "UVVis"
   ctmName$ = ctmBase
   NewCtm(ctmName$)
   ClearCtm(ctmName$)

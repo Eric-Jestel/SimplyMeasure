@@ -353,7 +353,7 @@ class InstrumentController:
 
                 name = settings[0].split("_")
                 satSettings = settings[3].split(",")
-                if len(satSettings) < 3 or len(name) < 2 or name[0] != "UV" or name[1] != "Vis":
+                if len(satSettings) < 3 or len(name) < 1 or name[0] != "UVVis":
                     return False
 
                 fields = blankFile.readline().split(",")
