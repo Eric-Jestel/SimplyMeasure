@@ -13,12 +13,14 @@ def get_blanks_folder(parent=None) -> Path:
     blanks = Path.home() / "Desktop" / "Blanks"
     if not blanks.exists():
         blanks.mkdir(parents=True)
-        QMessageBox.information(
-            parent,
-            "Blanks Folder Created",
+        msg = QMessageBox(parent)
+        msg.setWindowTitle("Blanks Folder Created")
+        msg.setText(
             f"No 'Blanks' folder was found on your Desktop.\n\n"
-            f"One has been created for you at:\n{blanks}",
+            f"One has been created for you at:\n{blanks}"
         )
+        msg.setStyleSheet("QLabel { color: #000000; }")
+        msg.exec()
     return blanks
 
 
