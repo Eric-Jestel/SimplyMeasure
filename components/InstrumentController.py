@@ -73,8 +73,8 @@ class InstrumentController:
 
         self.instrumentParams = {
             self.REG_P_FILENAME: self.SCAN_FOLDER,
-            self.REG_P_WAVE_START: 600,
-            self.REG_P_WAVE_STOP: 500,
+            self.REG_P_WAVE_START: 900,
+            self.REG_P_WAVE_STOP: 300,
             self.REG_P_SATURATION: 0.1,
             self.REG_P_BANDWIDTH: 2,
         }
