@@ -4,3 +4,4 @@ __pycache__/
 .venv/
 .env
 scans/*
+debug_payload.json
