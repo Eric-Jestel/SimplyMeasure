@@ -68,6 +68,8 @@ class InstrumentController:
         self.blank_start = 0
         self.blank_end = 0
         self.blank_data = []
+        self._adl_process = None
+
 
         self.instrumentParams = {
             self.REG_P_FILENAME: self.SCAN_FOLDER,
@@ -416,7 +418,7 @@ class InstrumentController:
             self._clear_mailbox(reset_file_counter=False)
 
             # Launches the ADL file that communicates with the instrument
-            subprocess.Popen(self.ADL_FILE, shell=True)
+            self._adl_process = subprocess.Popen(self.ADL_FILE, shell=True)
 
             params = self.instrumentParams
             reply = self._send_and_wait("SETUP", params, timeout_s=30.0)
@@ -600,6 +602,22 @@ class InstrumentController:
             Boolean: True if successful
         """
         self._print_received("shutdown")
+        proc = getattr(self, "_adl_process", None)
+        if proc and proc.poll() is None:
+            self._print_tx("OS", "taskkill", {"pid": proc.pid, "tree": True})
+            try:
+                subprocess.run(
+                    ["taskkill", "/T", "/F", "/PID", str(proc.pid)],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                self._print_executed("shutdown", True)
+                return True
+            except Exception as exc:
+                self._debug(f"shutdown() taskkill failed: {exc}")
+                self._print_executed("shutdown", False)
+                return False
 
-        reply = self._send_and_wait("SHUTDOWN", {})
-        return self._is_success(reply)
+        self._print_executed("shutdown", True)
+        return True

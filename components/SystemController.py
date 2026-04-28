@@ -190,7 +190,7 @@ class SystemController:
             if csv_path:
                 self.ServController.parse_csv(csv_path)
                 #verify server connection
-                if 1: #self._server_ready():
+                if self._server_ready():
                     # sends data to UI somehow and send data to server controller to send to the ICN
                     self._print_received("ServerController.send_all_data")
                     sent = self.ServController.send_all_data()
@@ -216,11 +216,11 @@ class SystemController:
                     ):
                         self._print_executed("runLabMachine", (0, csv_path))
                         return 000, csv_path  # CSV is returned for graphing
-                    self._print_executed("runLabMachine", (110, None))
-                    return 110, None
+                    self._print_executed("runLabMachine", (110, csv_path))
+                    return 110, csv_path
                 else:
-                    self._print_executed("runLabMachine", (110, None))
-                    return 110, None
+                    self._print_executed("runLabMachine", (110, csv_path))
+                    return 110, csv_path
             else:
                 self._print_executed("runLabMachine", (400, None))
                 return 400, None
@@ -309,29 +309,14 @@ class SystemController:
         self._print_received("stopProgram")
         # verify the server controller is connected and logged in
         self._debug("stopProgram() invoked")
-        if self._server_ready():
-            if self.ServController.is_logged_in():
-                # sends instructions for the Server controller to disconnect
-                self._print_received("ServerController.logout")
-                self.ServController.logout()
-                self._print_executed("ServerController.logout", True)
-            # verify instrument connection
-            if self._instrument_ready():
-                # sends instructions for the Instrument Controller to shut down the machine
-                self._print_received("InstrumentController.shutdown")
-                shut_ok = self.InstController.shutdown()
-                self._print_executed("InstrumentController.shutdown", shut_ok)
-                self._debug(f"stopProgram() shutdown -> {shut_ok}")
-                result = 000 if shut_ok else 100
-                self._print_executed("stopProgram", result)
-                return result
-            else:
-                self._print_executed("stopProgram", 100)
-                return 100
-        else:
-            self._print_executed("stopProgram", 110)
-            return 110
 
+        # sends instructions for the Instrument Controller to shut down the machine
+        self._print_received("InstrumentController.shutdown")
+        shut_ok = self.InstController.shutdown()
+        result = 000 if shut_ok else 100
+        self._print_executed("stopProgram", result)
+        return result
+    
 
 # ------------------------------------------------------------------------------------------------------------------------------------------
 # error code stuffs

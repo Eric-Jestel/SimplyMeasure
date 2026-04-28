@@ -47,6 +47,19 @@ class App:
 
         self.show("setup")
 
+        self.window.closeEvent = self.closeEvent
+
+    def closeEvent(self, event):
+        print("[App][RECEIVED] closeEvent")
+
+        if self.controller:
+            print("[App][TX] SystemController.stopProgram")
+            self.controller.stopProgram()
+
+        print("[App][EXECUTED] closeEvent -> accepted")
+        event.accept()
+
+
     def show(self, name: str):
         """Switch the visible page by name."""
         self.stack.setCurrentWidget(self.pages[name])

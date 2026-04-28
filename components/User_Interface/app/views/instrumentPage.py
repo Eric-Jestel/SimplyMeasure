@@ -389,6 +389,12 @@ class ActionPanel(Panel):
                     data_viewer = self.main_window.pages["session"].data_viewer
                     data_viewer.add_sample_csv(sample_name, csv_path)
             else:
+                if code == 110 and csv_path:
+                    sample_name = Path(csv_path).name
+                    if self.main_window:
+                        data_viewer = self.main_window.pages["session"].data_viewer
+                        data_viewer.add_sample_csv(sample_name, csv_path)
+
                 QMessageBox.critical(
                     self,
                     "Take Sample",
