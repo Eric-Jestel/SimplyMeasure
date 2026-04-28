@@ -38,11 +38,14 @@ class InstrumentControllerOpus:
         self.blankData = None
 
         # Settings for measuring samples
-        self.sampleSettings = {}
+        self.sampleSettings = {"hfw": 1100, "lfw": 190}
 
         self.opus_process = None
 
         self.blank_file = "" # <--
+
+        # need to have a connected variable to check if we are connected to the machine
+        self.connected = False
         
 
     def _print_received(self, command: str, payload=None) -> None:
@@ -154,6 +157,7 @@ class InstrumentControllerOpus:
 
         if not opus.connected:
             opus.connect()
+            opus.connected = True
 
         _ = opus.get_version()
         return opus
@@ -335,7 +339,7 @@ class InstrumentControllerOpus:
             native_blank_path = csv_path.with_suffix(".0")
 
             print("Taking Blank...")
-            opus.measure_ref()
+            opus.measure_ref(hfw=1100, lfw=190)
 
             saved_path = Path(str(opus.save_ref()))
             print("Blank taken and saved to:", saved_path)
@@ -352,8 +356,8 @@ class InstrumentControllerOpus:
             created_csv = self.opus_to_csv(
                 opus_filename=str(native_blank_path),
                 csv_filename=str(csv_path),
-                wave_start=self.sampleSettings.get("hfw", 600),
-                wave_stop=self.sampleSettings.get("lfw", 500),
+                wave_start=self.sampleSettings.get("hfw", 1100),
+                wave_stop=self.sampleSettings.get("lfw", 190),
                 saturation=0.1,
                 bandwidth=2
             )
@@ -455,13 +459,59 @@ class InstrumentControllerOpus:
 
         return sample_path
     """
-
-
     def take_sample(self, filename):
         """
-        Takes a sample, moves the native OPUS output to the right place,
-        converts it to CSV, and returns the CSV path.
+        Takes a sample, saves the native OPUS file, converts it to CSV,
+        and returns the CSV path.
         """
+        self._print_received("take_sample", {"filename": filename})
+
+        try:
+            opus = self._get_connected_opus()
+
+            csv_path = Path(filename)
+            csv_path.parent.mkdir(parents=True, exist_ok=True)
+
+            native_target = csv_path.with_suffix(".0")
+
+            print("Taking Sample...")
+            sample_path = Path(str(
+                opus.measure_sample(
+                    unload=True,
+                    **self.sampleSettings
+                )
+            ))
+            print("Saved native sample to:", str(sample_path))
+
+            if sample_path != native_target:
+                self._copy_when_ready(sample_path, native_target)
+                print("Copied native sample to:", str(native_target))
+            else:
+                native_target = sample_path
+
+            created_csv = self.opus_to_csv(
+                opus_filename=str(native_target),
+                csv_filename=str(csv_path),
+                wave_start=self.sampleSettings.get("hfw", 1100),
+                wave_stop=self.sampleSettings.get("lfw", 190),
+                saturation=0.1,
+                bandwidth=2
+            )
+
+            if created_csv is None:
+                self._print_executed("take_sample", None)
+                return None
+
+            self._print_executed("take_sample", created_csv)
+            return created_csv
+
+        except Exception as e:
+            print("Failed to take sample:", e)
+            self._print_executed("take_sample", None)
+            return None
+'''
+    def take_sample(self, filename):
+        
         self._print_received("take_sample", {"filename": filename})
 
         try:
@@ -548,6 +598,7 @@ class InstrumentControllerOpus:
             print("Shutdown failed:", e)
             return False
             
+'''
 
 
 
