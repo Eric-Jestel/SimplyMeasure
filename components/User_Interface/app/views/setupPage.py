@@ -275,7 +275,12 @@ class StatusPanel(Panel):
             "Connected" if connected else "Disconnected", ok=connected
         )
         if not connected:
-            QMessageBox.warning(self, "Instrument", "Instrument reconnect failed.")
+            msg = QMessageBox(self)
+            msg.setWindowTitle("Instrument")
+            msg.setText("Instrument reconnect failed.")
+            msg.setIcon(QMessageBox.Icon.Warning)
+            msg.setStyleSheet("QLabel { color: #000000; }")
+            msg.exec()
 
     def _on_reconnect_server(self):
         if not self.app:
@@ -284,7 +289,12 @@ class StatusPanel(Panel):
         self.app.state.server_status = "OK" if ok else "Disconnected"
         self.server_sub.set_status("OK" if ok else "Disconnected", ok=ok)
         if not ok:
-            QMessageBox.warning(self, "Server", "Server reconnect failed.")
+            msg = QMessageBox(self)
+            msg.setWindowTitle("Server")
+            msg.setText("Server reconnect failed.")
+            msg.setIcon(QMessageBox.Icon.Warning)
+            msg.setStyleSheet("QLabel { color: #000000; }")
+            msg.exec()
 
 
 # ── Panel 3 : Actions ─────────────────────────────────────────────────────────
