@@ -188,7 +188,7 @@ class BlankPlot(SpectrumPlotWidget):
     def load_csv(self, filepath: str):
         """Read a two-column CSV (wavelength, absorbance) and plot it."""
         try:
-            x, y, header = self._read_csv(filepath)
+            x, y, _ = self._read_csv(filepath)
         except Exception as e:
             QMessageBox.warning(self, "Load Error", f"Could not load spectrum:\n{e}")
             return
@@ -203,11 +203,6 @@ class BlankPlot(SpectrumPlotWidget):
             y,
             pen=pg.mkPen(color=COLOUR_BLANK, width=1.5),
         )
-
-        # Use CSV header as axis labels if present
-        if header and len(header) >= 2:
-            self.plot_widget.setLabel("bottom", header[0], color=TEXT_MAIN)
-            self.plot_widget.setLabel("left", header[1], color=TEXT_MAIN)
 
     def clear_plot(self):
         """Remove curve and restore placeholder."""

@@ -314,7 +314,7 @@ class InstructionsPanel(Panel):
         inset = InsetBox()
         inset.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
-        self.expl_label = QLabel("Log in by entering your ICN username.")
+        self.expl_label = QLabel("Enter your ICN username and press Login to begin your session. If the server is unavailable, you may continue in offline mode, samples will still be captured and displayed locally.")
         self.expl_label.setFont(QFont("Helvetica Neue", 10))
         self.expl_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.expl_label.setWordWrap(True)
@@ -328,9 +328,9 @@ class InstructionsPanel(Panel):
 
     def _set_step(self, step: int):
         explanations = {
-            1: "Log in by entering your ICN username.",
-            2: "Place your sample in the instrument. Ensure the sample holder is clean and properly positioned. The smooth side of Cuvette should be facing the camera.",
-            3: "Press Capture to begin the measurement. Do not move the sample until the reading is complete.",
+            1: "Enter your ICN username and press Login to begin your session. If the server is unavailable, you may continue in offline mode, samples will still be captured and displayed locally.",
+            2: "Open the instrument chamber and place your cuvette in the sample holder. Ensure the holder is clean and free of residue. Orient the cuvette so the clear, smooth face is aligned with the light path. Close the chamber before proceeding.",
+            3: "Press 'Take Sample' to begin the measurement. Keep the sample and instrument completely still during the scan. Once complete, the spectrum will appear in the plot below. Repeat for additional samples, each will be overlaid for comparison.",
         }
         self.expl_label.setText(explanations.get(step, "No explanation available."))
         self.expl_label.setStyleSheet(

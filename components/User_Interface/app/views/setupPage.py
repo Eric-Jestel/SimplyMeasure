@@ -83,6 +83,7 @@ class InsetBox(QFrame):
             lbl = QLabel(text)
             lbl.setFont(QFont("Helvetica Neue", 9))
             lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            lbl.setWordWrap(True)
             lbl.setStyleSheet(
                 f"color: {TEXT_MUTED}; background: transparent; border: none;"
             )
@@ -158,7 +159,7 @@ class ConnectionSubPanel(QWidget):
         row.setSpacing(10)
 
         info_box = InsetBox(info_text)
-        info_box.setMinimumHeight(68)
+        info_box.setMinimumHeight(90)
         info_box.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
         )
@@ -236,7 +237,7 @@ class StatusPanel(Panel):
 
         self.instr_sub = ConnectionSubPanel(
             "Instrument Information",
-            "Ensure USB Connection to Instrument",
+            "Ensure the instrument is powered on and connected via USB before continuing. If the status shows disconnected, check the cable and press Reconnect.",
             reconnect_cmd=self._on_reconnect_instrument,
         )
         layout.addWidget(self.instr_sub, stretch=1)
@@ -249,9 +250,7 @@ class StatusPanel(Panel):
 
         self.server_sub = ConnectionSubPanel(
             "ICN Server Information",
-            "Click Button to reconnect to server\n"
-            "If connection cannot be established visit:\n"
-            "https://example.com/support",
+            "The ICN server is required to log in and upload sample data. If the connection cannot be established, you may continue in offline mode, though data will not be synced until reconnected.",
             reconnect_cmd=self._on_reconnect_server,
         )
         layout.addWidget(self.server_sub, stretch=1)
