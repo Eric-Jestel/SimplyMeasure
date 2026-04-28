@@ -421,7 +421,7 @@ class InstrumentPage(QWidget):
 
         left.addWidget(branding, stretch=1)
         left.addWidget(login)
-        left.addWidget(actions, stretch=4)
+        left.addWidget(actions, stretch=3)
 
         left_container = QWidget()
         left_container.setFixedWidth(270)

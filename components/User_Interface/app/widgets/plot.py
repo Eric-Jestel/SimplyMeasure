@@ -158,7 +158,7 @@ class BlankPlot(SpectrumPlotWidget):
 
     def __init__(self, parent=None):
         super().__init__(
-            title="Blank Spectrum",
+            title="",
             placeholder="No data loaded — use 'Load Blank from File' or 'Capture Blank'",
             parent=parent,
         )
@@ -212,6 +212,7 @@ class SamplePlot(SpectrumPlotWidget):
 
     def __init__(self, parent=None):
         super().__init__(
+            title="",
             placeholder="No samples taken yet — use 'Take sample' to begin",
             parent=parent,
         )
