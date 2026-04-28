@@ -72,6 +72,7 @@ class SpectrumPlotWidget(QFrame):
 
         pi = self.plot_widget.getPlotItem()
         pi.showGrid(x=True, y=True, alpha=0.3)
+        pi.hideButtons()
 
         self.plot_widget.setLabel("bottom", x_label, color=TEXT_MAIN)
         self.plot_widget.setLabel("left", y_label, color=TEXT_MAIN)
