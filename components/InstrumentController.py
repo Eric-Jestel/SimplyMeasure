@@ -44,7 +44,7 @@ class InstrumentController:
 
     ADL_FILE = r".\components\MailboxCheck.adl"
     SCAN_FOLDER = (
-        "C:\\Users\\Agilent Cary 60\\Documents\\SoftwareDev - dont delete\\Scans\\"
+        "C:\\Users\\Agilent Cary 60\\Documents\\SoftwareDev - dont delete\\COS-397-Black-2025\\Scans\\"
     )
     POLL_INTERVAL_S = 0.1
     TIMEOUT_S = 10.0

@@ -16,6 +16,25 @@ class App:
     def __init__(self, PROJECT_ROOT):
         self.PROJECT_ROOT = PROJECT_ROOT
         self.qt_app = QApplication.instance() or QApplication(sys.argv)
+        self.qt_app.setStyleSheet("""
+            QMessageBox {
+                background-color: #F0F0F0;
+            }
+            QMessageBox QLabel {
+                color: #202020;
+                background: transparent;
+            }
+            QMessageBox QPushButton {
+                background-color: #D0D0D0;
+                color: #202020;
+                border: none;
+                border-radius: 4px;
+                padding: 5px 16px;
+                min-height: 28px;
+            }
+            QMessageBox QPushButton:hover   { background-color: #C0C0C0; }
+            QMessageBox QPushButton:pressed { background-color: #B0B0B0; }
+        """)
 
         self.state = UIState()
         self.controller = SystemController(

@@ -53,6 +53,8 @@ class SystemController:
             400: "No data",
             550: "No blank to set",
         }
+        self.offline = not self.ServController.ping()
+        self.offlineUsername = None
         print("[SystemController][EXECUTED] __init__ controllers initialized")
 
     def _print_received(self, command: str, payload=None) -> None:
@@ -137,12 +139,14 @@ class SystemController:
                 self._print_executed("signIn", 220)
                 return 220
         else:
+            self.offlineUsername = username
             self._print_executed("signIn", 110)
             return 110
 
     # ------------------------------------------------------------------------------------------------------------------------------------------
     def signOut(self):
         self._print_received("signOut")
+        self.offlineUsername = None
         # verify server connectivity
         self._debug("signOut() invoked")
         if self._server_ready():
@@ -177,8 +181,11 @@ class SystemController:
 
         activeUser = self.ServController.user
         if not activeUser:
-            self._print_executed("runLabMachine", (300, None))
-            return 300, None
+            if not self.offline:
+                self._print_executed("runLabMachine", (300, None))
+                return 300, None
+            else:
+                activeUser = self.offlineUsername
 
         if self._instrument_ready():
             # sends instructions to machine to run test

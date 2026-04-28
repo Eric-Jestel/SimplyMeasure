@@ -283,6 +283,11 @@ class ServerController:
             self._print_executed("send_data", False)
             return False
 
+        data_key_for_upload = data_key
+        if "T" in data_key:
+            date_part, time_part = data_key.split("T", 1)
+            data_key_for_upload = f"{date_part}T{time_part.replace('-', ':')}"
+
         self._print_received("send_data", {"samplePath": str(samplePath)})
         # ensure logged in as file owner and session valid
         if self.user != username or not self.is_logged_in():
@@ -324,7 +329,7 @@ class ServerController:
 
         json_input = {
             "sessionUUID": self.UUID,
-            "dataKey": data_key,
+            "dataKey": data_key_for_upload,
             "instrument-type": instrument_type,
             "dataArray": dataArray,
         }

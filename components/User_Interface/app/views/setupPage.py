@@ -279,7 +279,6 @@ class StatusPanel(Panel):
             msg.setWindowTitle("Instrument")
             msg.setText("Instrument reconnect failed.")
             msg.setIcon(QMessageBox.Icon.Warning)
-            msg.setStyleSheet("QLabel { color: #000000; }")
             msg.exec()
 
     def _on_reconnect_server(self):
@@ -293,7 +292,6 @@ class StatusPanel(Panel):
             msg.setWindowTitle("Server")
             msg.setText("Server reconnect failed.")
             msg.setIcon(QMessageBox.Icon.Warning)
-            msg.setStyleSheet("QLabel { color: #000000; }")
             msg.exec()
 
 

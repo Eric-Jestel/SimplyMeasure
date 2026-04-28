@@ -61,7 +61,7 @@ class WavelengthDialog(QDialog):
         root.addWidget(_h_rule())
 
         # Pull current values from instrumentParams if available
-        start_default, stop_default = WAVE_MAX, WAVE_MIN
+        start_default, stop_default = 900, 300
         if app:
             params = app.controller.InstController.instrumentParams
             try:
