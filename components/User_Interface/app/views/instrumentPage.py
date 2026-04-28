@@ -245,7 +245,6 @@ class LoginPanel(Panel):
             self.app.state.username = username
             self._show_reset_state()
             self.login_changed.emit(True)
-            QMessageBox.information(self, "Login", f"Logged in as {username}.")
         elif code == 220:
             InvalidUsernameDialog(parent=self).exec()
         elif code == 110:
