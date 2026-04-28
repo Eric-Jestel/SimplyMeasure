@@ -173,8 +173,8 @@ class WavelengthDialog(QDialog):
             return
 
         if self._app:
-            params = self._app.controller.InstController.instrumentParams
-            params["WavelengthStart"] = start
-            params["WavelengthStop"]  = end
+            self._app.controller.InstController.changeSettings(
+                waveStart=start, waveStop=end
+            )
 
         self.accept()
