@@ -5,6 +5,7 @@ Simply — Jack of all Spades
 
 from app.widgets.plot import SamplePlot
 from app.dialogs.loginErrorDialogs import InvalidUsernameDialog, ServerOfflineDialog
+from app.dialogs.sampleSuccessDialog import SampleSuccessDialog
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget,
@@ -393,9 +394,7 @@ class ActionPanel(Panel):
             if code == 0 and csv_path:
                 sample_name = Path(csv_path).name
                 self.app.state.sample_files.append(csv_path)
-                QMessageBox.information(
-                    self, "Take Sample", f"Sample captured:\n{sample_name}"
-                )
+                SampleSuccessDialog(sample_name, parent=self).exec()
                 if self.main_window:
                     data_viewer = self.main_window.pages["session"].data_viewer
                     data_viewer.add_sample_csv(sample_name, csv_path)
