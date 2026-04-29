@@ -21,12 +21,10 @@ class FakeResponse:
     def json(self):
         return self.data
 
-
 def make_server(tmp_path, monkeypatch):
     monkeypatch.setenv("ICN_PRIVATE_API_KEY", "test-key")
     server = ServerController(str(tmp_path), debug=False)
     return server
-
 
 def test_server_starts_with_no_user(tmp_path, monkeypatch):
     server = make_server(tmp_path, monkeypatch)
@@ -35,7 +33,6 @@ def test_server_starts_with_no_user(tmp_path, monkeypatch):
     assert server.UUID == 0
     assert server.UUID_expiry == 0
 
-
 def test_ping_alive(tmp_path, monkeypatch):
     server = make_server(tmp_path, monkeypatch)
 
@@ -43,14 +40,12 @@ def test_ping_alive(tmp_path, monkeypatch):
                       return_value=FakeResponse({"STATUS": "alive"})):
         assert server.ping() is True
 
-
 def test_ping_maintenance(tmp_path, monkeypatch):
     server = make_server(tmp_path, monkeypatch)
 
     with patch.object(server_module.requests, "get",
                       return_value=FakeResponse({"STATUS": "maintenance"})):
         assert server.ping() is False
-
 
 def test_login_sets_session(tmp_path, monkeypatch):
     server = make_server(tmp_path, monkeypatch)
@@ -69,7 +64,6 @@ def test_login_sets_session(tmp_path, monkeypatch):
     assert server.user == "test"
     assert server.UUID == "abc123"
 
-
 def test_login_fails(tmp_path, monkeypatch):
     server = make_server(tmp_path, monkeypatch)
 
@@ -79,7 +73,6 @@ def test_login_fails(tmp_path, monkeypatch):
 
     assert server.user is None
 
-
 def test_logout_clears_user(tmp_path, monkeypatch):
     server = make_server(tmp_path, monkeypatch)
     server.user = "test"
@@ -88,7 +81,6 @@ def test_logout_clears_user(tmp_path, monkeypatch):
     assert server.logout() is True
     assert server.user is None
     assert server.UUID == 0
-
 
 def test_validate_good_session(tmp_path, monkeypatch):
     server = make_server(tmp_path, monkeypatch)
@@ -100,7 +92,6 @@ def test_validate_good_session(tmp_path, monkeypatch):
 
     assert server.validate() is True
 
-
 def test_validate_expired_session(tmp_path, monkeypatch):
     server = make_server(tmp_path, monkeypatch)
     server.user = "test"
@@ -110,7 +101,6 @@ def test_validate_expired_session(tmp_path, monkeypatch):
     ).isoformat()
 
     assert server.validate() is False
-
 
 def test_parse_csv_makes_json_file(tmp_path, monkeypatch):
     server = make_server(tmp_path, monkeypatch)
@@ -140,7 +130,6 @@ def test_parse_csv_makes_json_file(tmp_path, monkeypatch):
     assert "260" in text
     assert "0.12" in text
 
-
 def test_parse_csv_without_user_fails(tmp_path, monkeypatch):
     server = make_server(tmp_path, monkeypatch)
 
@@ -149,7 +138,6 @@ def test_parse_csv_without_user_fails(tmp_path, monkeypatch):
 
     assert server.parse_csv(str(csv_file)) is False
 
-
 def test_send_data_bad_file_name(tmp_path, monkeypatch):
     server = make_server(tmp_path, monkeypatch)
 
@@ -157,7 +145,6 @@ def test_send_data_bad_file_name(tmp_path, monkeypatch):
     file.write_text("[]")
 
     assert server.send_data(str(file)) is False
-
 
 def test_send_data_success(tmp_path, monkeypatch):
     server = make_server(tmp_path, monkeypatch)
@@ -178,13 +165,11 @@ def test_send_data_success(tmp_path, monkeypatch):
     assert not data_file.exists()
     assert (tmp_path / "test_sample_sent.json").exists()
 
-
 def test_send_all_data_empty_folder(tmp_path, monkeypatch):
     server = make_server(tmp_path, monkeypatch)
     server.file_dir = str(tmp_path / "missing_folder")
 
     assert server.send_all_data() == []
-
 
 def test_send_all_data_finds_unsent_file(tmp_path, monkeypatch):
     server = make_server(tmp_path, monkeypatch)
@@ -203,3 +188,4 @@ def test_send_all_data_finds_unsent_file(tmp_path, monkeypatch):
         result = server.send_all_data()
 
     assert result == [("test_sample_unsent.json", True)]
+    

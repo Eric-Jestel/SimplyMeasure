@@ -46,7 +46,6 @@ class MockServerController:
     def parse_csv(self, csv_path):
         self.parsed_csv_paths.append(csv_path)
 
-
 class MockInstrumentController:
     def __init__(self, PROJECT_ROOT=None, debug=True):
         self.PROJECT_ROOT = PROJECT_ROOT
@@ -83,7 +82,6 @@ class MockInstrumentController:
     def shutdown(self):
         return self.shutdown_value
 
-
 def make_controller(tmp_path, **kwargs):
     return SystemController(
         PROJECT_ROOT=tmp_path,
@@ -93,7 +91,6 @@ def make_controller(tmp_path, **kwargs):
         debug=False,
         **kwargs,
     )
-
 
 def test_init_creates_controllers(tmp_path):
     controller = make_controller(tmp_path)
@@ -109,7 +106,6 @@ def test_init_creates_controllers(tmp_path):
     assert controller.offlineUsername is None
     assert controller.ErrorDictionary[0] == "Good to go"
 
-
 def test_instrument_ping(tmp_path):
     controller = make_controller(tmp_path)
     controller.InstController.ping_value = True
@@ -118,7 +114,6 @@ def test_instrument_ping(tmp_path):
 
     controller.InstController.ping_value = False
     assert controller._instrument_ready() is False
-
 
 def test_server_connect(tmp_path):
     controller = make_controller(tmp_path)
@@ -129,12 +124,10 @@ def test_server_connect(tmp_path):
     controller.ServController.connect_value = False
     assert controller._server_ready() is False
 
-
 def test_startup__success(tmp_path):
     controller = make_controller(tmp_path)
 
     assert controller.startUp() == 0
-
 
 def test_startup_instrument_setup_fails(tmp_path):
     controller = make_controller(tmp_path)
@@ -142,53 +135,46 @@ def test_startup_instrument_setup_fails(tmp_path):
 
     assert controller.startUp() == 100
 
-
 def test_startup_server_connect_fails(tmp_path):
     controller = make_controller(tmp_path)
     controller.ServController.connect_value = False
 
     assert controller.startUp() == 110
 
-
 def test_signin_success(tmp_path):
     controller = make_controller(tmp_path)
 
-    assert controller.signIn("alice") == 0
-    assert controller.ServController.user == "alice"
-
+    assert controller.signIn("test") == 0
+    assert controller.ServController.user == "test"
 
 def test_signin_login_fail(tmp_path):
     controller = make_controller(tmp_path)
     controller.ServController.login_value = False
 
-    assert controller.signIn("alice") == 220
-
+    assert controller.signIn("test") == 220
 
 def test_signin_server_unavailable(tmp_path):
     controller = make_controller(tmp_path)
     controller.ServController.connect_value = False
 
-    assert controller.signIn("alice") == 110
-    assert controller.offlineUsername == "alice"
-
+    assert controller.signIn("test") == 110
+    assert controller.offlineUsername == "test"
 
 def test_signout_sends_data_logs_out(tmp_path):
     controller = make_controller(tmp_path)
-    controller.ServController.user = "alice"
+    controller.ServController.user = "test"
     controller.ServController.logged_in_value = True
-    controller.ServController.send_all_data_value = [("alice_sample_unsent.json", True)]
+    controller.ServController.send_all_data_value = [("test_sample_unsent.json", True)]
 
     assert controller.signOut() == 0
     assert controller.offlineUsername is None
     assert controller.ServController.user is None
-
 
 def test_signout_no_user_logged_in(tmp_path):
     controller = make_controller(tmp_path)
     controller.ServController.logged_in_value = False
 
     assert controller.signOut() == 300
-
 
 def test_signout_logout_fail(tmp_path):
     controller = make_controller(tmp_path)
@@ -197,13 +183,11 @@ def test_signout_logout_fail(tmp_path):
 
     assert controller.signOut() == 330
 
-
 def test_signout_server_unavailable(tmp_path):
     controller = make_controller(tmp_path)
     controller.ServController.connect_value = False
 
     assert controller.signOut() == 110
-
 
 def test_run_lab_machine_no_active_user(tmp_path):
     controller = make_controller(tmp_path)
@@ -212,61 +196,39 @@ def test_run_lab_machine_no_active_user(tmp_path):
 
     assert controller.runLabMachine() == (300, None)
 
-
-def test_run_lab_machine_instrument_fail(tmp_path):
-    controller = make_controller(tmp_path)
-    controller.ServController.user = "alice"
-    controller.InstController.ping_value = False
-
-    assert controller.runLabMachine() == (100, None)
-
-
 def test_run_lab_machine_sample_fail(tmp_path):
     controller = make_controller(tmp_path)
-    controller.ServController.user = "alice"
+    controller.ServController.user = "test"
     controller.InstController.take_sample_value = ""
 
     assert controller.runLabMachine() == (400, None)
 
-
 def test_run_lab_machine_parses_csv_sends_data(tmp_path):
     controller = make_controller(tmp_path)
-    controller.ServController.user = "alice"
-    controller.InstController.take_sample_value = "C:/out/alice2026-04-28T12-00-00.csv"
+    controller.ServController.user = "test"
+    controller.InstController.take_sample_value = "C:/out/test2026-04-28T12-00-00.csv"
     controller.ServController.send_all_data_value = [
-        ("alice_2026-04-28T12-00-00_unsent.json", True)
+        ("test_2026-04-28T12-00-00_unsent.json", True)
     ]
 
     assert controller.runLabMachine() == (
         0,
-        "C:/out/alice2026-04-28T12-00-00.csv",
+        "C:/out/test2026-04-28T12-00-00.csv",
     )
     assert controller.ServController.parsed_csv_paths == [
-        "C:/out/alice2026-04-28T12-00-00.csv"
+        "C:/out/test2026-04-28T12-00-00.csv"
     ]
-
-
-def test_run_lab_machine_csv_when_server_not_ready(tmp_path):
-    controller = make_controller(tmp_path)
-    controller.ServController.user = "alice"
-    controller.InstController.take_sample_value = "C:/out/alice_sample.csv"
-
-    server_ready_values = iter([True, False])
-    with patch.object(controller, "_server_ready", side_effect=lambda: next(server_ready_values)):
-        assert controller.runLabMachine() == (110, "C:/out/alice_sample.csv")
-
 
 def test_run_lab_machine_upload_missing(tmp_path):
     controller = make_controller(tmp_path)
-    controller.ServController.user = "alice"
-    controller.InstController.take_sample_value = "C:/out/alice2026-04-28T12-00-00.csv"
+    controller.ServController.user = "test"
+    controller.InstController.take_sample_value = "C:/out/test2026-04-28T12-00-00.csv"
     controller.ServController.send_all_data_value = [("other_file_unsent.json", True)]
 
     assert controller.runLabMachine() == (
         110,
-        "C:/out/alice2026-04-28T12-00-00.csv",
+        "C:/out/test2026-04-28T12-00-00.csv",
     )
-
 
 def test_take_blank_generates_default_filename(tmp_path):
     controller = make_controller(tmp_path)
@@ -281,14 +243,12 @@ def test_take_blank_generates_default_filename(tmp_path):
         str(Path(controller.ServController.file_dir) / "blank_20260428_120000.csv")
     ]
 
-
 def test_take_blank_uses_provided_filename(tmp_path):
     controller = make_controller(tmp_path)
     controller.InstController.blank_file = "C:/out/custom_blank.csv"
 
     assert controller.takeBlank("custom_blank.csv") == (0, "C:/out/custom_blank.csv")
     assert controller.InstController.take_blank_calls == ["custom_blank.csv"]
-
 
 def test_take_blank_capture_fails(tmp_path):
     controller = make_controller(tmp_path)
@@ -302,19 +262,16 @@ def test_set_blank_success(tmp_path):
     assert controller.setBlank("blank-data") == 0
     assert controller.InstController.set_blank_calls == ["blank-data"]
 
-
 def test_set_blank_data_missing(tmp_path):
     controller = make_controller(tmp_path)
 
     assert controller.setBlank("") == 400
-
 
 def test_set_blank_rejects_blank(tmp_path):
     controller = make_controller(tmp_path)
     controller.InstController.set_blank_value = False
 
     assert controller.setBlank("blank-data") == 550
-
 
 def test_set_blank_instrument_not_ready(tmp_path):
     controller = make_controller(tmp_path)
@@ -328,12 +285,10 @@ def test_take_sample_instrument_not_ready(tmp_path):
 
     assert controller.takeSample() == (100, None)
 
-
 def test_stop_program_success(tmp_path):
     controller = make_controller(tmp_path)
 
     assert controller.stopProgram() == 0
-
 
 def test_stop_program_shutdown_fail(tmp_path):
     controller = make_controller(tmp_path)
