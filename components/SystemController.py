@@ -255,8 +255,8 @@ class SystemController:
             self._debug(f"takeBlank() result={data}")
             if data:
                 # send data to UI to hold onto for setting the blank
-                self._print_executed("takeBlank", (0, self.InstController.blank_file))
-                return 000, self.InstController.blank_file
+                self._print_executed("takeBlank", (0, data))
+                return 000, data
             else:
                 self._print_executed("takeBlank", (400, None))
                 return 400, None
