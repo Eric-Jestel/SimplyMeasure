@@ -51,7 +51,9 @@ class InstrumentController:
     TIMEOUT_MULTIPLIER = 1.25
     TIMEOUT_CONTANT = 5
 
+    # minimum valid wavelength
     WAVE_MIN = 190
+
     WAVE_MAX = 1100
     SAT_MIN = 0.0125
     SAT_MAX = 1000
@@ -75,7 +77,7 @@ class InstrumentController:
             self.REG_P_FILENAME: self.SCAN_FOLDER,
             self.REG_P_WAVE_START: 900,
             self.REG_P_WAVE_STOP: 300,
-            self.REG_P_SATURATION: 0.1,
+            self.REG_P_SATURATION: self.SAT_MIN,
             self.REG_P_BANDWIDTH: 2,
         }
 

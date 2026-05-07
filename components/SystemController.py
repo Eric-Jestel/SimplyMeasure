@@ -174,6 +174,7 @@ class SystemController:
 
         activeUser = self.ServController.user
         if not activeUser:
+            print(self.offline)
             if not self.offline:
                 self._print_executed("runLabMachine", (300, None))
                 return 300, None
