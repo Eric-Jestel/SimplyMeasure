@@ -390,20 +390,30 @@ class ActionPanel(Panel):
                 return
             dialog.done(0)
             code, csv_path = result
-            if code == 0 and csv_path:
+
+            if csv_path:
                 sample_name = Path(csv_path).name
                 self.app.state.sample_files.append(csv_path)
-                SampleSuccessDialog(sample_name, parent=self).exec()
+
+                reset_cb = None
                 if self.main_window:
+                    session_page = self.main_window.pages.get("session")
+                    if session_page and hasattr(session_page, "login_panel"):
+                        reset_cb = session_page.login_panel._on_reset
+
+                sent = (code == 0)
+                dlg = SampleSuccessDialog(
+                    sample_name,
+                    sent_to_server=sent,
+                    on_reset=reset_cb,
+                    parent=self,
+                )
+                keep_session = dlg.exec() == QDialog.DialogCode.Accepted
+
+                if keep_session and self.main_window:
                     data_viewer = self.main_window.pages["session"].data_viewer
                     data_viewer.add_sample_csv(sample_name, csv_path)
             else:
-                if code == 110 and csv_path:
-                    sample_name = Path(csv_path).name
-                    if self.main_window:
-                        data_viewer = self.main_window.pages["session"].data_viewer
-                        data_viewer.add_sample_csv(sample_name, csv_path)
-
                 StyledErrorDialog(
                     "Take Sample",
                     self.app.controller.ErrorDictionary.get(code, f"Error code: {code}"),
@@ -460,13 +470,13 @@ class InstrumentPage(QWidget):
         left.setSpacing(8)
 
         branding = BrandingPanel()
-        login = LoginPanel(app=self.app)
+        self.login_panel = LoginPanel(app=self.app)
         actions = ActionPanel(app=self.app, main_window=self.main_window)
-        login.login_changed.connect(actions.set_take_enabled)
-        login.session_reset.connect(self._on_session_reset)
+        self.login_panel.login_changed.connect(actions.set_take_enabled)
+        self.login_panel.session_reset.connect(self._on_session_reset)
 
         left.addWidget(branding, stretch=1)
-        left.addWidget(login)
+        left.addWidget(self.login_panel)
         left.addWidget(actions, stretch=3)
 
         left_container = QWidget()
