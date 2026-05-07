@@ -266,17 +266,39 @@ class StatusPanel(Panel):
             )
 
     def refresh_status(self):
-        """Re-read connection state from app.state and update both widgets."""
+        """Re-ping both connections in background threads and update when done."""
         if not self.app:
             return
-        instr_ok = self.app.state.instrument_connected
-        self.instr_sub.set_status(
-            "Connected" if instr_ok else "Disconnected", ok=instr_ok
-        )
-        serv_ok = self.app.state.server_status == "OK"
-        self.server_sub.set_status(
-            "Connected" if serv_ok else "Disconnected", ok=serv_ok
-        )
+        from app.dialogs.captureDialog import CaptureWorker
+
+        self.instr_sub._apply_neutral_style()
+        self.instr_sub.status_btn.setText("Checking...")
+        self.server_sub._apply_neutral_style()
+        self.server_sub.status_btn.setText("Checking...")
+
+        self._instr_worker = CaptureWorker(self.app.controller.InstController.ping)
+
+        def on_instr_done(result):
+            connected = bool(result)
+            self.app.state.instrument_connected = connected
+            self.instr_sub.set_status(
+                "Connected" if connected else "Disconnected", ok=connected
+            )
+
+        self._instr_worker.finished.connect(on_instr_done)
+        self._instr_worker.start()
+
+        self._serv_worker = CaptureWorker(self.app.controller.ServController.connect)
+
+        def on_serv_done(result):
+            ok = bool(result)
+            self.app.state.server_status = "OK" if ok else "Disconnected"
+            self.server_sub.set_status(
+                "Connected" if ok else "Disconnected", ok=ok
+            )
+
+        self._serv_worker.finished.connect(on_serv_done)
+        self._serv_worker.start()
 
     def _on_reconnect_instrument(self):
         if not self.app:

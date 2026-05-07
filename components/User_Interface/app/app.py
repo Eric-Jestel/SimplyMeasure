@@ -51,6 +51,8 @@ class App:
         self.window.setWindowTitle(APP_TITLE)
         self.window.setMinimumSize(QSize(*WINDOW_MIN_SIZE))
         self.window.showMaximized()
+        self.window.activateWindow()
+        self.window.raise_()
 
 
 

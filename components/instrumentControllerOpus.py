@@ -46,9 +46,10 @@ class InstrumentController:
         # Settings for measuring samples
         self.sampleSettings = {"hfw": 16799, "lfw": 0, "nss": 50}
 
-        self.opus_process = None
-
         self.blank_file = "" # <--
+
+        self._opusProcID = None
+
 
         # need to have a connected variable to check if we are connected to the machine
         self.connected = False
@@ -189,7 +190,7 @@ class InstrumentController:
         # Launch OPUS (GUI)
         if launch_opus:
             try:
-                self.opus_process = subprocess.Popen([self.opusExePath])  # starts OPUS Software
+                self._opusProcID = subprocess.Popen([self.opusExePath])  # starts OPUS Software
                 print("OPUS launched.")
                 result = True
                 print("Please log into OPUS.")
@@ -593,15 +594,34 @@ class InstrumentController:
         """
         return self.sampleSettings
 
-    def shutdown(self):
+def shutdown(self):
         """
-        Properly shuts the instrument controller
-        Should be run when the application is closed
+        Shuts the instrument down
 
         Returns:
-            Boolean: True if the controller was shutdown properly
+            Boolean: True if successful
         """
-        return False
+        self._print_received("shutdown")
+        proc = getattr(self, "_opusProcID", None)
+        if proc and proc.poll() is None:
+            self._print_tx("OS", "taskkill", {"pid": proc.pid, "tree": True})
+            try:
+                subprocess.run(
+                    ["taskkill", "/T", "/F", "/PID", str(proc.pid)],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                self._print_executed("shutdown", True)
+                return True
+            except Exception as exc:
+                self._debug(f"shutdown() taskkill failed: {exc}")
+                self._print_executed("shutdown", False)
+                return False
+
+        self._print_executed("shutdown", True)
+        return True
+
 '''
     def take_sample(self, filename):
         

@@ -82,13 +82,16 @@ class SpectrumPlotWidget(QFrame):
         else:
             pi.setTitle(None)
 
-        self.plot_widget.setXRange(*x_range, padding=0)
-        self.plot_widget.setYRange(*y_range, padding=0)
+        _PAD = 0.03
+        x_pad = _PAD * (x_range[1] - x_range[0])
+        y_pad = _PAD * (y_range[1] - y_range[0])
+        self.plot_widget.setXRange(*x_range, padding=_PAD)
+        self.plot_widget.setYRange(*y_range, padding=_PAD)
         self.plot_widget.setLimits(
-            xMin=x_range[0],
-            xMax=x_range[1],
-            yMin=y_range[0],
-            yMax=y_range[1],
+            xMin=x_range[0] - x_pad,
+            xMax=x_range[1] + x_pad,
+            yMin=y_range[0] - y_pad,
+            yMax=y_range[1] + y_pad,
         )
         self.plot_widget.setMouseEnabled(x=False, y=False)
 
@@ -116,8 +119,10 @@ class SpectrumPlotWidget(QFrame):
     def set_x_range(self, x_min: float, x_max: float):
         """Update the visible x-axis range and pan/zoom limits."""
         self._x_mid = (x_min + x_max) / 2
-        self.plot_widget.setXRange(x_min, x_max, padding=0)
-        self.plot_widget.setLimits(xMin=x_min, xMax=x_max)
+        _PAD = 0.03
+        x_pad = _PAD * (x_max - x_min)
+        self.plot_widget.setXRange(x_min, x_max, padding=_PAD)
+        self.plot_widget.setLimits(xMin=x_min - x_pad, xMax=x_max + x_pad)
         if self._placeholder_visible:
             self._placeholder.setPos(self._x_mid, self._y_mid)
 
