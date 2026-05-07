@@ -123,10 +123,10 @@ class InvalidUsernameDialog(QDialog):
         ok_btn.setFont(QFont("Helvetica Neue", 9))
         ok_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         ok_btn.setStyleSheet("""
-            QPushButton         { background-color: #4CAF50; color: #FFFFFF;
+            QPushButton         { background-color: #F9A825; color: #FFFFFF;
                                   border: none; border-radius: 4px; padding: 5px 16px; }
-            QPushButton:hover   { background-color: #43A047; }
-            QPushButton:pressed { background-color: #388E3C; }
+            QPushButton:hover   { background-color: #F57F17; }
+            QPushButton:pressed { background-color: #E65100; }
         """)
         ok_btn.clicked.connect(self.accept)
         root.addWidget(ok_btn)
