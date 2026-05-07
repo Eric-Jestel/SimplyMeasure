@@ -432,9 +432,9 @@ class ServerController:
 if __name__ == "__main__":
     test_controller = ServerController(PROJECT_ROOT=".", debug=True)
     print(test_controller.connect())
-    print(test_controller.login("testuser"))
+    print(test_controller.login("sarat"))
 
-    test_csv = Path("scans") / "testuser2026-05-07T12-11-28.csv"
+    test_csv = Path("scans") / "sarat2026-05-07T20-43-02.csv"
     print(test_controller.parse_csv(str(test_csv)))
     print(test_controller.send_all_data())
 

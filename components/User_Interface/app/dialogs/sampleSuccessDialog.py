@@ -100,7 +100,7 @@ class SampleSuccessDialog(QDialog):
         btn_row = QHBoxLayout()
         btn_row.setSpacing(8)
 
-        take_btn = QPushButton("Continue Session")
+        take_btn = QPushButton("Continue Taking Samples")
         take_btn.setMinimumHeight(36)
         take_btn.setFont(QFont("Helvetica Neue", 9))
         take_btn.setCursor(Qt.CursorShape.PointingHandCursor)

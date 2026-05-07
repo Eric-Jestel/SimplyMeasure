@@ -4,10 +4,10 @@ from pathlib import Path
 from datetime import datetime
 
 try:
-    from InstrumentController import InstrumentController
+    from InstrumentControllerOpus import InstrumentController
     from ServerController import ServerController
 except ImportError:
-    from components.InstrumentController import InstrumentController
+    from components.InstrumentControllerOpus import InstrumentController
     from components.ServerController import ServerController
 
 print("SystemController imported")
@@ -97,6 +97,18 @@ class SystemController:
             self._debug(f"_server_ready() ping exception: {exc}")
             self._print_executed("_server_ready", False)
             return False
+
+    def getMaxWave(self):
+        return self.InstController.getMaxWave()
+    
+    def getMinWave(self):
+        return self.InstController.getMinWave()
+    
+    def getWaveStart(self):
+        return self.InstController.getWaveStart()
+    
+    def getWaveStop(self):
+        return self.InstController.getWaveStop()
 
     # ------------------------------------------------------------------------------------------------------------------------------------------
     def startUp(self):
@@ -305,15 +317,16 @@ class SystemController:
             self._print_executed("takeSample", (100, None))
             return 100, None
 
-    def getInstrumentSetting(self):
+    def changeInstrumentSetting(self, waveStart=None, waveStop=None):
         """
-        Gets the current settings of the instrument
+        Changes the settings of the instrument
 
         Returns:
-            dict: a dictionary containing the current settings of the instrument
-        """
-        return self.InstController.get_settings()
-    
+            bool: True if the settings were changed successfully, False otherwise
+        """        
+        return self.InstController.change_settings(waveStart, waveStop)
+
+
     # ------------------------------------------------------------------------------------------------------------------------------------------
     def stopProgram(self):
         self._print_received("stopProgram")
