@@ -4,7 +4,7 @@ Simply — Jack of all Spades
 """
 
 from app.widgets.plot import SamplePlot
-from app.dialogs.loginErrorDialogs import InvalidUsernameDialog, ServerOfflineDialog
+from app.dialogs.loginErrorDialogs import InvalidUsernameDialog, ServerOfflineDialog, StyledErrorDialog
 from app.dialogs.sampleSuccessDialog import SampleSuccessDialog
 from pathlib import Path
 from PyQt6.QtWidgets import (
@@ -16,7 +16,6 @@ from PyQt6.QtWidgets import (
     QFrame,
     QSizePolicy,
     QLineEdit,
-    QMessageBox,
     QDialog,
 )
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -239,7 +238,7 @@ class LoginPanel(Panel):
             return
         username = self.username_input.text().strip()
         if not username:
-            QMessageBox.warning(self, "Login", "Please enter a username.")
+            StyledErrorDialog("Login", "Please enter a username.", parent=self).exec()
             return
         code = self.app.controller.signIn(username)
         if code == 0:
@@ -256,7 +255,7 @@ class LoginPanel(Panel):
                 self.login_changed.emit(True)
         else:
             error = self.app.controller.ErrorDictionary.get(code, f"Error code: {code}")
-            QMessageBox.critical(self, "Login Failed", f"Could not verify username.\n\n{error}")
+            StyledErrorDialog("Login Failed", f"Could not verify username.\n\n{error}", parent=self).exec()
 
     def _on_reset(self):
         self.username_input.clear()
@@ -405,11 +404,11 @@ class ActionPanel(Panel):
                         data_viewer = self.main_window.pages["session"].data_viewer
                         data_viewer.add_sample_csv(sample_name, csv_path)
 
-                QMessageBox.critical(
-                    self,
+                StyledErrorDialog(
                     "Take Sample",
                     self.app.controller.ErrorDictionary.get(code, f"Error code: {code}"),
-                )
+                    parent=self,
+                ).exec()
 
         def on_cancel():
             self._sample_cancelled = True
