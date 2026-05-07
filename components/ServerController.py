@@ -357,7 +357,7 @@ class ServerController:
         self._print_executed("send_data", False)
         return False
 
-    def parse_csv(self, filepath):
+    def parse_csv(self, filepath, offlineMode = False, offlineUsername = None):
         """
         Takes in a csv file, then converts it into a JSON file.
         username_datetime_unsent.json is the ouputted file in the to be sent folder
@@ -370,11 +370,15 @@ class ServerController:
         self._print_received("parse_csv", {"filepath": str(filepath), "user": self.user})
 
         if not self.user:
-            self._debug("parse_csv() rejected: no logged-in user")
-            self._print_executed("parse_csv", False)
-            return False
+            if not offlineMode:
+                self._debug("parse_csv() rejected: no logged-in user")
+                self._print_executed("parse_csv", False)
+                return False
+            else:
+                filename_username = offlineUsername
 
-        filename_username = self.user
+        if not offlineMode:
+            filename_username = self.user
         filename_stem = Path(filepath).stem
         username_prefix = f"{filename_username}"
         if filename_stem.startswith(username_prefix):
@@ -398,11 +402,14 @@ class ServerController:
 
         scan_type_token = lines[0].split("-", 1)[0].strip()
         normalized = scan_type_token.replace("_", "-").lower()
+        print(normalized)
         if normalized == "uv-vis" or normalized == "uvvis":
             instrument_type = "uv-vis"
+            print("UV-VIS detected")
         elif normalized == "ir":
             instrument_type = "ir"
-        else:
+            print("IR detected")
+        else:  
             self._debug(f"parse_csv() unsupported scan type token: {scan_type_token}")
             self._print_executed("parse_csv", False)
             return False

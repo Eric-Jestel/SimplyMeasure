@@ -4,10 +4,10 @@ from pathlib import Path
 from datetime import datetime
 
 try:
-    from InstrumentControllerOpus import InstrumentController
+    from InstrumentController import InstrumentController
     from ServerController import ServerController
 except ImportError:
-    from components.InstrumentControllerOpus import InstrumentController
+    from components.InstrumentController import InstrumentController
     from components.ServerController import ServerController
 
 print("SystemController imported")
@@ -132,6 +132,8 @@ class SystemController:
         # verify connection to ICN
         self._debug(f"signIn() username={username}")
         if self._server_ready():
+            self.offline = False
+            self.offlineUsername = None
             # send information to server controller to sign in
             self._print_received("ServerController.login", {"username": username})
             loggedIn = self.ServController.login(username)
@@ -144,6 +146,7 @@ class SystemController:
                 self._print_executed("signIn", 220)
                 return 220
         else:
+            self.offline = True
             self.offlineUsername = username
             self._print_executed("signIn", 110)
             return 110
@@ -186,7 +189,7 @@ class SystemController:
 
         activeUser = self.ServController.user
         if not activeUser:
-            print(self.offline)
+            print("Offline status is " + str(self.offline))
             if not self.offline:
                 self._print_executed("runLabMachine", (300, None))
                 return 300, None
@@ -201,7 +204,7 @@ class SystemController:
             self._print_executed("InstrumentController.take_sample", csv_path)
             self._debug(f"runLabMachine() sample received={bool(csv_path)}")
             if csv_path:
-                self.ServController.parse_csv(csv_path)
+                self.ServController.parse_csv(csv_path, self.offline, self.offlineUsername)
                 #verify server connection
                 if self._server_ready():
                     # sends data to UI somehow and send data to server controller to send to the ICN

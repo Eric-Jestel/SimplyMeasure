@@ -260,6 +260,7 @@ class LoginPanel(Panel):
     def _on_reset(self):
         self.username_input.clear()
         if self.app:
+            self.app.controller.signOut()
             self.app.state.username = ""
             self.app.state.sample_files.clear()
             self.app.state.offline_mode = False
