@@ -567,7 +567,7 @@ class InstrumentController:
         self._clear_mailbox()
         return sample
 
-    def changeSettings(self, waveStart="", waveStop="", saturation="", bandwidth=""):
+    def changeSettings(self, waveStart=None, waveStop=None, saturation=None, bandwidth=None):
 
         self.instrumentParams[self.REG_P_WAVE_START] = (
             waveStart or self.instrumentParams[self.REG_P_WAVE_START]
@@ -626,10 +626,10 @@ class InstrumentController:
         Returns:
             Boolean: True if successful
         """
-        self._print_received("shutdown")
+        # self._print_received("shutdown")
         proc = getattr(self, "_adl_process", None)
         if proc and proc.poll() is None:
-            self._print_tx("OS", "taskkill", {"pid": proc.pid, "tree": True})
+            # self._print_tx("OS", "taskkill", {"pid": proc.pid, "tree": True})
             try:
                 subprocess.run(
                     ["taskkill", "/T", "/F", "/PID", str(proc.pid)],
@@ -637,12 +637,12 @@ class InstrumentController:
                     capture_output=True,
                     text=True,
                 )
-                self._print_executed("shutdown", True)
+                # self._print_executed("shutdown", True)
                 return True
             except Exception as exc:
-                self._debug(f"shutdown() taskkill failed: {exc}")
-                self._print_executed("shutdown", False)
+                # self._debug(f"shutdown() taskkill failed: {exc}")
+                # self._print_executed("shutdown", False)
                 return False
 
-        self._print_executed("shutdown", True)
+        # self._print_executed("shutdown", True)
         return True

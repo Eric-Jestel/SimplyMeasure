@@ -83,19 +83,67 @@ class InstrumentController:
 
         return False
 
+    def getScanTime(self):
+        """
+        Estimates the time it will take to complete a scan in seconds
+
+        Returns:
+            float: estimated time it will take to complete a scan in seconds
+        """
+        return 0
+
+    def getBlankTime(self):
+        """
+        Estimates the time it will take to complete a blank scan in seconds
+
+        Returns:
+            float: estimated time it will take to complete a blank scan in seconds
+        """
+        return 0
+
     def getMaxWave(self):
+        """
+        Returns the maximum wavelength the instrument can scan at
+        
+        Returns:
+            int: the maximum wavelength the instrument can scan at
+        """
         return self.MAX_WAVE
     
     def getMinWave(self):
+        """
+        Returns the minimum wavelength the instrument can scan at
+        
+        Returns:
+            int: the minimum wavelength the instrument can scan at
+        """
         return self.MIN_WAVE
 
     def getWaveStart(self):
+        """
+        Returns the starting wavelength for the next scan
+        
+        Returns:
+            int: the starting wavelength for the next scan
+        """
         return self.sampleSettings.get("hfw", self.MAX_WAVE)
     
     def getWaveStop(self):
+        """
+        Returns the ending wavelength for the next scan
+        
+        Returns:
+            int: the ending wavelength for the next scan
+        """
         return self.sampleSettings.get("lfw", self.MIN_WAVE)
     
     def getSampleCount(self):
+        """
+        Returns the number of samples to be taken for the next scan
+
+        Returns:
+            int: the number of samples to be taken for the next scan
+        """
         return self.sampleSettings.get("nss", self.SAMPLE_COUNT_MIN)
 
     def validate_scan(self, filename):
@@ -380,6 +428,15 @@ class InstrumentController:
             print("Failed to set blank:", e)
             self._print_executed("set_blank", False)
             return False
+        
+    def clear_blank(self) -> None:
+        """
+        Removes the blank from memory and unloads it from OPUS so that no blank is active
+
+        Returns:
+            Boolena: True if the blank was cleared
+        """
+        return False
 
     def take_sample(self, filename):
         """
@@ -401,8 +458,8 @@ class InstrumentController:
             sample_path = Path(str(
                 opus.measure_sample(
                     unload=True,
-                    hfw=self.getWaveStart(),
-                    lfw=self.getWaveStop(),
+                    lfq=self.getWaveStart(),
+                    hfq=self.getWaveStop(),
                     nss=self.getSampleCount()
                 )
             ))
@@ -417,9 +474,9 @@ class InstrumentController:
             created_csv = self.opus_to_csv(
                 opus_filename=str(native_target),
                 csv_filename=str(csv_path),
-                wave_start=self.sampleSettings.get("hfw", 16799),
-                wave_stop=self.sampleSettings.get("lfw", 0),
-                sample_count=self.sampleSettings.get("nss", 50)
+                wave_start=self.getWaveStart(),
+                wave_stop=self.getWaveStop(),
+                sample_count=self.getSampleCount()
             )
 
             if created_csv is None:
@@ -468,10 +525,10 @@ class InstrumentController:
         Returns:
             Boolean: True if successful
         """
-        self._print_received("shutdown")
+        # self._print_received("shutdown")
         proc = getattr(self, "_opusProcID", None)
         if proc and proc.poll() is None:
-            self._print_tx("OS", "taskkill", {"pid": proc.pid, "tree": True})
+            # self._print_tx("OS", "taskkill", {"pid": proc.pid, "tree": True})
             try:
                 subprocess.run(
                     ["taskkill", "/T", "/F", "/PID", str(proc.pid)],
@@ -479,14 +536,14 @@ class InstrumentController:
                     capture_output=True,
                     text=True,
                 )
-                self._print_executed("shutdown", True)
+                # self._print_executed("shutdown", True)
                 return True
             except Exception as exc:
-                self._debug(f"shutdown() taskkill failed: {exc}")
-                self._print_executed("shutdown", False)
+                # self._debug(f"shutdown() taskkill failed: {exc}")
+                # self._print_executed("shutdown", False)
                 return False
 
-        self._print_executed("shutdown", True)
+        # self._print_executed("shutdown", True)
         return True
 
 #test = InstrumentControllerOpus()

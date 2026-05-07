@@ -27,8 +27,7 @@ BORDER   = "#CACACA"
 TEXT_MAIN  = "#484848"
 TEXT_MUTED = "#909090"
 
-WAVE_MIN = 190
-WAVE_MAX = 1100
+
 
 
 def _h_rule():
@@ -40,6 +39,10 @@ def _h_rule():
 
 
 class WavelengthDialog(QDialog):
+
+    WAVE_MIN = 190
+    WAVE_MAX = 1100
+    
     def __init__(self, app=None, parent=None):
         super().__init__(parent)
         self._app = app
@@ -47,6 +50,13 @@ class WavelengthDialog(QDialog):
         self.setWindowTitle("Set Wavelength")
         self.setMinimumWidth(340)
         self.setStyleSheet(f"background-color: {BG};")
+
+        if app:
+            try:
+                self.WAVE_MAX = int(app.controller.getMaxWave())
+                self.WAVE_MIN = int(app.controller.getMinWave())
+            except (ValueError, TypeError):
+                pass
 
         root = QVBoxLayout(self)
         root.setContentsMargins(24, 20, 24, 20)
@@ -63,10 +73,10 @@ class WavelengthDialog(QDialog):
         # Pull current values from instrumentParams if available
         start_default, stop_default = 900, 300
         if app:
-            params = app.controller.InstController.instrumentParams
+            # params = app.controller.InstController.instrumentParams
             try:
-                start_default = int(params.get("WavelengthStart", WAVE_MAX))
-                stop_default  = int(params.get("WavelengthStop",  WAVE_MIN))
+                start_default = int(app.controller.getWaveStart())
+                stop_default  = int(app.controller.getWaveStop())
             except (ValueError, TypeError):
                 pass
 
@@ -86,7 +96,7 @@ class WavelengthDialog(QDialog):
         start_lbl.setFont(QFont("Helvetica Neue", 10))
         start_lbl.setStyleSheet(f"color: {TEXT_MAIN}; background: transparent; border: none;")
         self.start_spin = QSpinBox()
-        self.start_spin.setRange(WAVE_MIN, WAVE_MAX)
+        self.start_spin.setRange(self.WAVE_MIN, self.WAVE_MAX)
         self.start_spin.setSingleStep(1)
         self.start_spin.setValue(start_default)
         self.start_spin.setFixedWidth(120)
@@ -103,7 +113,7 @@ class WavelengthDialog(QDialog):
         end_lbl.setFont(QFont("Helvetica Neue", 10))
         end_lbl.setStyleSheet(f"color: {TEXT_MAIN}; background: transparent; border: none;")
         self.end_spin = QSpinBox()
-        self.end_spin.setRange(WAVE_MIN, WAVE_MAX)
+        self.end_spin.setRange(self.WAVE_MIN, self.WAVE_MAX)
         self.end_spin.setSingleStep(1)
         self.end_spin.setValue(stop_default)
         self.end_spin.setFixedWidth(120)
@@ -115,7 +125,7 @@ class WavelengthDialog(QDialog):
         root.addLayout(end_row)
 
         # Info label
-        info = QLabel(f"Start must be greater than End. Range: {WAVE_MIN}–{WAVE_MAX} nm")
+        info = QLabel(f"Start must be greater than End. Range: {self.WAVE_MIN}–{self.WAVE_MAX} nm")
         info.setFont(QFont("Helvetica Neue", 8))
         info.setAlignment(Qt.AlignmentFlag.AlignCenter)
         info.setStyleSheet(f"color: {TEXT_MUTED}; background: transparent; border: none;")
@@ -173,7 +183,7 @@ class WavelengthDialog(QDialog):
             return
 
         if self._app:
-            self._app.controller.InstController.changeSettings(
+            self._app.controller.changeInstrumentSettings(
                 waveStart=start, waveStop=end
             )
             instrument_page = self._app.pages.get("session")

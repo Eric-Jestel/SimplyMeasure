@@ -4,10 +4,10 @@ from pathlib import Path
 from datetime import datetime
 
 try:
-    from InstrumentController import InstrumentController
+    from InstrumentControllerOpus import InstrumentController
     from ServerController import ServerController
 except ImportError:
-    from components.InstrumentController import InstrumentController
+    from components.InstrumentControllerOpus import InstrumentController
     from components.ServerController import ServerController
 
 print("SystemController imported")
@@ -320,15 +320,14 @@ class SystemController:
             self._print_executed("takeSample", (100, None))
             return 100, None
 
-    def changeInstrumentSetting(self, waveStart=None, waveStop=None):
+    def changeInstrumentSettings(self, waveStart=None, waveStop=None):
         """
         Changes the settings of the instrument
 
         Returns:
             bool: True if the settings were changed successfully, False otherwise
-        """        
-        return self.InstController.change_settings(waveStart, waveStop)
-
+        """
+        return self.InstController.changeSettings(waveStart=waveStart, waveStop=waveStop)
 
     # ------------------------------------------------------------------------------------------------------------------------------------------
     def stopProgram(self):

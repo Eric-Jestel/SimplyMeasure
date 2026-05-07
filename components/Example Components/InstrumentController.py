@@ -1,6 +1,6 @@
 class InstrumentController:
     """
-    Communicates with the instrument
+    A sample class for an Instrument Controller that communicates with the instrument
     """
 
     def __init__(self, PROJECT_ROOT, debug: bool = False):
@@ -12,6 +12,42 @@ class InstrumentController:
             debug (bool, optional): a flag to enable debug mode. Defaults to False.
         """
         pass
+
+    def getMaxWave(self):
+        """
+        Returns the maximum wavelength the instrument can scan at
+        
+        Returns:
+            int: the maximum wavelength the instrument can scan at
+        """
+        return 0
+    
+    def getMinWave(self):
+        """
+        Returns the minimum wavelength the instrument can scan at
+        
+        Returns:
+            int: the minimum wavelength the instrument can scan at
+        """
+        return 0
+    
+    def getWaveStart(self):
+        """
+        Returns the starting wavelength for the next scan
+        
+        Returns:
+            int: the starting wavelength for the next scan
+        """
+        return 0
+    
+    def getWaveStop(self):
+        """
+        Returns the ending wavelength for the next scan
+        
+        Returns:
+            int: the ending wavelength for the next scan
+        """
+        return 0
 
     def validate_scan(self, filename):
         """
@@ -88,7 +124,7 @@ class InstrumentController:
 
     def clear_blank(self) -> None:
         """
-        Removes the blank from memory and 
+        Removes the blank from memory and unloads it from the instrument so that no blank is active
 
         Returns:
             Boolena: True if the blank was cleared
