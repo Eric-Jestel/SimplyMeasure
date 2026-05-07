@@ -1,4 +1,4 @@
-APP_TITLE = "Chemistry Instrumentation"
+APP_TITLE = "SimplyMeasure"
 WINDOW_MIN_SIZE = (1100, 700)
 
 PANEL_PAD = 10
