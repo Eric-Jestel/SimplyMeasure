@@ -66,6 +66,35 @@ def _cancel_style():
     """
 
 
+# ── Generic styled error dialog ──────────────────────────────────────────────
+class StyledErrorDialog(QDialog):
+    """Single-button error/warning dialog that always applies explicit styling."""
+
+    def __init__(self, title: str, message: str, parent=None):
+        super().__init__(parent)
+        self.setModal(True)
+        self.setWindowTitle(title)
+        self.setMinimumWidth(340)
+        self.setStyleSheet(f"background-color: {BG};")
+
+        root = _base_layout(self, title)
+        root.addWidget(_body_label(message))
+        root.addWidget(_h_rule())
+
+        ok_btn = QPushButton("OK")
+        ok_btn.setMinimumHeight(36)
+        ok_btn.setFont(QFont("Helvetica Neue", 9))
+        ok_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        ok_btn.setStyleSheet("""
+            QPushButton         { background-color: #4CAF50; color: #FFFFFF;
+                                  border: none; border-radius: 4px; padding: 5px 16px; }
+            QPushButton:hover   { background-color: #43A047; }
+            QPushButton:pressed { background-color: #388E3C; }
+        """)
+        ok_btn.clicked.connect(self.accept)
+        root.addWidget(ok_btn)
+
+
 # ── Dialog 1 : Invalid username (code 220) ────────────────────────────────────
 class InvalidUsernameDialog(QDialog):
     """

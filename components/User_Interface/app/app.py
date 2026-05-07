@@ -42,9 +42,9 @@ class App:
             debug=self.state.debug_mode, PROJECT_ROOT=self.PROJECT_ROOT
         )
 
-        startup_code = self.controller.startUp()
-        self.state.instrument_connected = startup_code != 100
-        self.state.server_status = "OK" if startup_code == 0 else "Disconnected"
+        inst_ok, serv_ok = self.controller.startUp()
+        self.state.instrument_connected = inst_ok
+        self.state.server_status = "OK" if serv_ok else "Disconnected"
         
         # Main window
         self.window = QMainWindow()

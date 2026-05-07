@@ -4,7 +4,7 @@ Simply — Jack of all Spades
 """
 
 from app.widgets.plot import SamplePlot
-from app.dialogs.loginErrorDialogs import InvalidUsernameDialog, ServerOfflineDialog
+from app.dialogs.loginErrorDialogs import InvalidUsernameDialog, ServerOfflineDialog, StyledErrorDialog
 from app.dialogs.sampleSuccessDialog import SampleSuccessDialog
 from pathlib import Path
 from PyQt6.QtWidgets import (
@@ -16,7 +16,6 @@ from PyQt6.QtWidgets import (
     QFrame,
     QSizePolicy,
     QLineEdit,
-    QMessageBox,
     QDialog,
 )
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -239,7 +238,7 @@ class LoginPanel(Panel):
             return
         username = self.username_input.text().strip()
         if not username:
-            QMessageBox.warning(self, "Login", "Please enter a username.")
+            StyledErrorDialog("Login", "Please enter a username.", parent=self).exec()
             return
         code = self.app.controller.signIn(username)
         if code == 0:
@@ -256,7 +255,7 @@ class LoginPanel(Panel):
                 self.login_changed.emit(True)
         else:
             error = self.app.controller.ErrorDictionary.get(code, f"Error code: {code}")
-            QMessageBox.critical(self, "Login Failed", f"Could not verify username.\n\n{error}")
+            StyledErrorDialog("Login Failed", f"Could not verify username.\n\n{error}", parent=self).exec()
 
     def _on_reset(self):
         self.username_input.clear()
@@ -391,25 +390,35 @@ class ActionPanel(Panel):
                 return
             dialog.done(0)
             code, csv_path = result
-            if code == 0 and csv_path:
+
+            if csv_path:
                 sample_name = Path(csv_path).name
                 self.app.state.sample_files.append(csv_path)
-                SampleSuccessDialog(sample_name, parent=self).exec()
+
+                reset_cb = None
                 if self.main_window:
+                    session_page = self.main_window.pages.get("session")
+                    if session_page and hasattr(session_page, "login_panel"):
+                        reset_cb = session_page.login_panel._on_reset
+
+                sent = (code == 0)
+                dlg = SampleSuccessDialog(
+                    sample_name,
+                    sent_to_server=sent,
+                    on_reset=reset_cb,
+                    parent=self,
+                )
+                keep_session = dlg.exec() == QDialog.DialogCode.Accepted
+
+                if keep_session and self.main_window:
                     data_viewer = self.main_window.pages["session"].data_viewer
                     data_viewer.add_sample_csv(sample_name, csv_path)
             else:
-                if code == 110 and csv_path:
-                    sample_name = Path(csv_path).name
-                    if self.main_window:
-                        data_viewer = self.main_window.pages["session"].data_viewer
-                        data_viewer.add_sample_csv(sample_name, csv_path)
-
-                QMessageBox.critical(
-                    self,
+                StyledErrorDialog(
                     "Take Sample",
                     self.app.controller.ErrorDictionary.get(code, f"Error code: {code}"),
-                )
+                    parent=self,
+                ).exec()
 
         def on_cancel():
             self._sample_cancelled = True
@@ -461,13 +470,13 @@ class InstrumentPage(QWidget):
         left.setSpacing(8)
 
         branding = BrandingPanel()
-        login = LoginPanel(app=self.app)
+        self.login_panel = LoginPanel(app=self.app)
         actions = ActionPanel(app=self.app, main_window=self.main_window)
-        login.login_changed.connect(actions.set_take_enabled)
-        login.session_reset.connect(self._on_session_reset)
+        self.login_panel.login_changed.connect(actions.set_take_enabled)
+        self.login_panel.session_reset.connect(self._on_session_reset)
 
         left.addWidget(branding, stretch=1)
-        left.addWidget(login)
+        left.addWidget(self.login_panel)
         left.addWidget(actions, stretch=3)
 
         left_container = QWidget()

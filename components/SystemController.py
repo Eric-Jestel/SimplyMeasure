@@ -101,25 +101,18 @@ class SystemController:
     # ------------------------------------------------------------------------------------------------------------------------------------------
     def startUp(self):
         self._print_received("startUp")
-        # verify machine connection
         self._debug("startUp() starting")
+
         self._print_received("InstrumentController.setup")
-        InstConn = self.InstController.setup()
-        self._print_executed("InstrumentController.setup", InstConn)
-        self._debug(f"startUp() instrument setup -> {InstConn}")
-        if InstConn:
-            # verify server connection
-            ServConn = self._server_ready()
-            self._debug(f"startUp() server connect -> {ServConn}")
-            if ServConn:
-                self._print_executed("startUp", 0)
-                return 000
-            else:
-                self._print_executed("startUp", 110)
-                return 110
-        else:
-            self._print_executed("startUp", 100)
-            return 100
+        inst_ok = bool(self.InstController.setup())
+        self._print_executed("InstrumentController.setup", inst_ok)
+        self._debug(f"startUp() instrument setup -> {inst_ok}")
+
+        serv_ok = self._server_ready()
+        self._debug(f"startUp() server connect -> {serv_ok}")
+
+        self._print_executed("startUp", (inst_ok, serv_ok))
+        return inst_ok, serv_ok
 
     # ------------------------------------------------------------------------------------------------------------------------------------------
     def signIn(self, username):
