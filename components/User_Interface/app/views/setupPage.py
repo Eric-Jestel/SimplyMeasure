@@ -435,6 +435,13 @@ class ActionPanel(Panel):
     def _on_continue(self):
         if not self.main_window:
             return
+        if self.app and not self.app.state.instrument_connected:
+            QMessageBox.warning(
+                self,
+                "No Instrument Connected",
+                "No instrument is connected.\n\nPlease connect the instrument via USB and press Reconnect before continuing.",
+            )
+            return
         server_down = self.app and self.app.state.server_status != "OK"
         if server_down:
             reply = QMessageBox.question(
