@@ -311,6 +311,15 @@ class SystemController:
             self._print_executed("takeSample", (100, None))
             return 100, None
 
+    def getInstrumentSetting(self):
+        """
+        Gets the current settings of the instrument
+
+        Returns:
+            dict: a dictionary containing the current settings of the instrument
+        """
+        return self.InstController.get_settings()
+    
     # ------------------------------------------------------------------------------------------------------------------------------------------
     def stopProgram(self):
         self._print_received("stopProgram")

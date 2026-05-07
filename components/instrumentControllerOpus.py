@@ -13,7 +13,7 @@ import csv
 print("InstrumentController module loaded")
 
 
-class InstrumentControllerOpus:
+class InstrumentController:
     
 
     def __init__(self, PROJECT_ROOT, debug: bool = False):
@@ -37,8 +37,13 @@ class InstrumentControllerOpus:
         # Data in the blank file. Saved as a Opus object
         self.blankData = None
 
+        #
+        self.MAX_WAVE = 16799
+        self.MIN_WAVE = 0
+        self.SAMPLE_COUNT_MIN = 1
+
         # Settings for measuring samples
-        self.sampleSettings = {"hfw": 1100, "lfw": 190}
+        self.sampleSettings = {"hfw": 16799, "lfw": 0, "nss": 50}
 
         self.opus_process = None
 
@@ -54,7 +59,53 @@ class InstrumentControllerOpus:
     def _print_executed(self, command: str, result=None) -> None:
         print(f"[InstrumentController][EXECUTED] {command} result={result}")
 
-    # this is a test!!!!
+    def validate_scan(self, filename):
+        """
+        Validates that scan/blank file matched the format for this instrument
+        Args:
+            filename (str): The filename of the blank file being validated
+        Returns:
+            boolean: True if the file contains a valid scan/blank
+        """
+
+        try:
+            with open(filename) as blankFile:
+                settings = blankFile.readline().split("-")
+                if len(settings) < 4:
+                    return False
+
+                name = settings[0].split("_")
+                satSettings = settings[3].split(",")
+                if len(satSettings) < 2 or len(name) < 1 or name[0] != "IR":
+                    return False
+
+                fields = blankFile.readline().split(",")
+                if len(fields) < 2 or fields[0] != "Wavelength (nm)" or fields[1] != "Abs":
+                    return False
+
+                waveStart = float(settings[1])
+                waveEnd = float(settings[2])
+                sample_count = float(satSettings[0])
+                if waveStart > self.MAX_WAVE or waveEnd < self.MIN_WAVE or waveStart <= waveEnd:
+                    return False
+                if sample_count < self.SAMPLE_COUNT_MIN:
+                    return False
+
+                prevWave = waveStart - 2
+                for line in blankFile:
+                    if line != "\n":
+                        values = [float(i) for i in line.strip().split(",")[:2]]
+                        waveDif = prevWave - values[0]
+                        if waveDif > 3 or waveDif < 0.5:
+                            return False
+                        prevWave = values[0]
+
+                return True
+        except ValueError:
+            return False
+        except FileNotFoundError:
+            return False
+
 
     def opus_to_csv(
     self,
@@ -62,12 +113,12 @@ class InstrumentControllerOpus:
     csv_filename,
     wave_start,
     wave_stop,
-    saturation,
-    bandwidth
+    sample_count,
+    blank=False
     ):
         """
         Read a native OPUS .0 file and convert it into a CSV file shaped like the
-        UV-Vis controller output.
+        IR controller output.
 
         Returns:
             str | None: path to the CSV file on success, None on failure
@@ -107,11 +158,14 @@ class InstrumentControllerOpus:
                 print("ERROR: No usable data blocks found in:", opus_path)
                 return None
 
+            t = ""
+            if blank:
+                t = "_Blank"
             with open(csv_path, "w", newline="", encoding="utf-8") as csv_file:
                 writer = csv.writer(csv_file)
 
                 # Match the general format expected by the other instrument controller
-                csv_file.write(f"UVVis-{wave_start}-{wave_stop}-{saturation},{bandwidth},\n")
+                csv_file.write(f"IR{t}-{wave_start}-{wave_stop}-{sample_count},\n")
 
                 # Header line
                 writer.writerow(["Wavelength (nm)", "Abs"])
@@ -339,7 +393,7 @@ class InstrumentControllerOpus:
             native_blank_path = csv_path.with_suffix(".0")
 
             print("Taking Blank...")
-            opus.measure_ref(hfw=1100, lfw=190)
+            opus.measure_ref(hfw=16799, lfw=0)
 
             saved_path = Path(str(opus.save_ref()))
             print("Blank taken and saved to:", saved_path)
@@ -356,10 +410,9 @@ class InstrumentControllerOpus:
             created_csv = self.opus_to_csv(
                 opus_filename=str(native_blank_path),
                 csv_filename=str(csv_path),
-                wave_start=self.sampleSettings.get("hfw", 1100),
-                wave_stop=self.sampleSettings.get("lfw", 190),
-                saturation=0.1,
-                bandwidth=2
+                wave_start=self.sampleSettings.get("hfw", 16799),
+                wave_stop=self.sampleSettings.get("lfw", 0),
+                sample_count=self.sampleSettings.get("nss", 50)
             )
 
             if created_csv is None:
@@ -492,10 +545,9 @@ class InstrumentControllerOpus:
             created_csv = self.opus_to_csv(
                 opus_filename=str(native_target),
                 csv_filename=str(csv_path),
-                wave_start=self.sampleSettings.get("hfw", 1100),
-                wave_stop=self.sampleSettings.get("lfw", 190),
-                saturation=0.1,
-                bandwidth=2
+                wave_start=self.sampleSettings.get("hfw", 16799),
+                wave_stop=self.sampleSettings.get("lfw", 0),
+                sample_count=self.sampleSettings.get("nss", 50)
             )
 
             if created_csv is None:
@@ -509,6 +561,43 @@ class InstrumentControllerOpus:
             print("Failed to take sample:", e)
             self._print_executed("take_sample", None)
             return None
+    
+    def changeSettings(self, waveStart=None, waveStop=None):
+        """
+        Changes the setting to the inputed values
+
+        Args:
+            waveStart (int, optional): The stating wavelength scan (should be the higher number). Defualts can be changed.
+            waveStop (int, optional): The ending wavelength scan (should be the lower number). Defaults can be changed.
+
+        Returns:
+            Boolean: True if the settings were changed
+        """
+        if waveStart is not None:
+            self.sampleSettings["hfw"] = waveStart
+        if waveStop is not None:
+            self.sampleSettings["lfw"] = waveStop
+        return True
+        
+
+    def getSettings(self):
+        """
+        Returns a dictionary containing the relavent parameters of the instrument controller
+
+        Returns:
+            dict: A dictionary containing the parameters
+        """
+        return self.sampleSettings
+
+    def shutdown(self):
+        """
+        Properly shuts the instrument controller
+        Should be run when the application is closed
+
+        Returns:
+            Boolean: True if the controller was shutdown properly
+        """
+        return False
 '''
     def take_sample(self, filename):
         
