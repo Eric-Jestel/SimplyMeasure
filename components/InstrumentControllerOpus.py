@@ -83,6 +83,12 @@ class InstrumentController:
 
         return False
 
+    def getMaxWave(self):
+        return self.MAX_WAVE
+    
+    def getMinWave(self):
+        return self.MIN_WAVE
+
     def getWaveStart(self):
         return self.sampleSettings.get("hfw", self.MAX_WAVE)
     
@@ -284,7 +290,7 @@ class InstrumentController:
             native_blank_path = csv_path.with_suffix(".0")
 
             print("Taking Blank...")
-            opus.measure_ref(hfw=self.MAX_WAVE, lfw=self.MIN_WAVE, ass=self.getSampleCount())
+            opus.measure_ref(hfw=self.MAX_WAVE, lfw=self.MIN_WAVE, nss=self.getSampleCount())
 
             saved_path = Path(str(opus.save_ref()))
             print("Blank taken and saved to:", saved_path)
