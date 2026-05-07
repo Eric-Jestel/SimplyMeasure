@@ -238,6 +238,7 @@ class SamplePlot(SpectrumPlotWidget):
         # Legend appears automatically once curves are named
         self._legend = self.plot_widget.addLegend(offset=(10, 10))
         self._legend.setFlag(self._legend.GraphicsItemFlag.ItemIsMovable, False)
+        self._legend.mouseDragEvent = lambda ev: None
 
     def _next_colour(self) -> str:
         c = COLOUR_CYCLE[self._colour_index % len(COLOUR_CYCLE)]
