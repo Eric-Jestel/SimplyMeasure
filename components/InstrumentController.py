@@ -338,6 +338,18 @@ class InstrumentController:
         except FileNotFoundError:
             return  # should neven get here because of validate_scan
 
+    def getMaxWave(self):
+        return self.WAVE_MAX
+    
+    def getMinWave(self):  
+        return self.WAVE_MIN
+    
+    def getWaveStart(self):
+        return self.instrumentParams[self.REG_P_WAVE_START]
+    
+    def getWaveStop(self):
+        return self.instrumentParams[self.REG_P_WAVE_STOP]
+
     def validate_scan(self, filename):
         """
         Validates that scan/blank file matched the format for this instrument
