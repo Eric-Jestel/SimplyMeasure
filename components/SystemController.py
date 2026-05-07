@@ -314,6 +314,19 @@ class SystemController:
         return self.InstController.get_settings()
     
     # ------------------------------------------------------------------------------------------------------------------------------------------
+    def changeSettings(self, waveStart=None, waveStop=None, saturation=None, bandwidth=None):
+        self._print_received("changeSettings", {
+            "waveStart": waveStart, "waveStop": waveStop,
+            "saturation": saturation, "bandwidth": bandwidth,
+        })
+        result = self.InstController.changeSettings(
+            waveStart=waveStart, waveStop=waveStop,
+            saturation=saturation, bandwidth=bandwidth,
+        )
+        self._print_executed("changeSettings", result)
+        return result
+
+    # ------------------------------------------------------------------------------------------------------------------------------------------
     def stopProgram(self):
         self._print_received("stopProgram")
         # verify the server controller is connected and logged in
