@@ -19,6 +19,7 @@ class InstrumentController:
     def __init__(self, PROJECT_ROOT, debug: bool = False):
 
         self.PROJECT_ROOT = PROJECT_ROOT
+        self.scans_folder = Path(PROJECT_ROOT).joinpath("scans")
         self.debug = bool(debug)
         # Path to Opus software
         self.opusExePath = "C:\\Program Files\\Bruker\\OPUS_8.8.4\\opus.exe"  # change to actual path to opus software
@@ -147,7 +148,7 @@ class InstrumentController:
                     continue
 
                 output_data = [
-                    [float(x), float(y)]
+                    [float(x), float(y), ""]
                     for x, y in zip(x_values, y_values)
                 ]
 
@@ -165,14 +166,14 @@ class InstrumentController:
                 writer = csv.writer(csv_file)
 
                 # Match the general format expected by the other instrument controller
-                csv_file.write(f"IR{t}-{wave_start}-{wave_stop}-{sample_count},\n")
+                csv_file.write(f"IR{t}-{wave_start}-{wave_stop}-{sample_count},,\n")
 
                 # Header line
-                writer.writerow(["Wavelength (nm)", "Abs"])
+                writer.writerow(["Wavelength (nm)", "Abs", ""])
 
                 # Data rows
                 writer.writerows(output_data)
-
+                
             return str(csv_path)
 
         except Exception as e:
@@ -522,8 +523,9 @@ class InstrumentController:
         try:
             opus = self._get_connected_opus()
 
-            csv_path = Path(filename)
-            csv_path.parent.mkdir(parents=True, exist_ok=True)
+            csv_path = self.scans_folder.joinpath(filename)
+            
+            #csv_path.parent.mkdir(parents=True, exist_ok=True)
 
             native_target = csv_path.with_suffix(".0")
 
@@ -531,7 +533,9 @@ class InstrumentController:
             sample_path = Path(str(
                 opus.measure_sample(
                     unload=True,
-                    **self.sampleSettings
+                    hfw=self.sampleSettings.get("hfw", 16799),
+                    lfw=self.sampleSettings.get("lfw", 0),
+                    nss=self.sampleSettings.get("nss", 50)
                 )
             ))
             print("Saved native sample to:", str(sample_path))

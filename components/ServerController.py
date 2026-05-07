@@ -434,7 +434,7 @@ if __name__ == "__main__":
     print(test_controller.connect())
     print(test_controller.login("testuser"))
 
-    test_csv = Path("scans") / "2025-01-01T12-00-01.csv"
+    test_csv = Path("scans") / "testuser2026-05-07T12-11-28.csv"
     print(test_controller.parse_csv(str(test_csv)))
     print(test_controller.send_all_data())
 
