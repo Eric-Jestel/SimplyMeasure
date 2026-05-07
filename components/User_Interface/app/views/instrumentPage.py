@@ -403,6 +403,10 @@ class ActionPanel(Panel):
                     if session_page and hasattr(session_page, "login_panel"):
                         reset_cb = session_page.login_panel._on_reset
 
+                if self.main_window:
+                    data_viewer = self.main_window.pages["session"].data_viewer
+                    data_viewer.add_sample_csv(sample_name, csv_path)
+
                 sent = (code == 0)
                 dlg = SampleSuccessDialog(
                     sample_name,
@@ -410,11 +414,7 @@ class ActionPanel(Panel):
                     on_reset=reset_cb,
                     parent=self,
                 )
-                keep_session = dlg.exec() == QDialog.DialogCode.Accepted
-
-                if keep_session and self.main_window:
-                    data_viewer = self.main_window.pages["session"].data_viewer
-                    data_viewer.add_sample_csv(sample_name, csv_path)
+                dlg.exec()
             else:
                 StyledErrorDialog(
                     "Take Sample",
